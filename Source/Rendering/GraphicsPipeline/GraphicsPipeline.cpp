@@ -14,11 +14,18 @@ void sandbox::GraphicsPipeline::Create(VkDevice device, const PipelineConfigurat
 	VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo = { };
 	vertexInputCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
+	VkPipelineViewportStateCreateInfo viewportCreateInfo = { };
+	viewportCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	viewportCreateInfo.viewportCount = 1;
+	viewportCreateInfo.scissorCount = 1;
+	configurationInfo.PopulateViewportCreateInfo(&viewportCreateInfo);
+
 	VkGraphicsPipelineCreateInfo createInfo = { };
 	createInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	createInfo.stageCount = 2;
 	createInfo.pStages = shaderModules.GetCreateInfos().data();
 	createInfo.pVertexInputState = &vertexInputCreateInfo;
+	createInfo.pViewportState = &viewportCreateInfo;
 	configurationInfo.PopulateGraphicsPipelineCreateInfo(&createInfo);
 	createInfo.basePipelineIndex = -1;
 

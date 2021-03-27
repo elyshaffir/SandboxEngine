@@ -12,12 +12,13 @@ namespace sandbox
 
 		void Create(VkExtent2D windowExtent);
 
+		void PopulateViewportCreateInfo(VkPipelineViewportStateCreateInfo * viewportCreateInfo) const;
+
 		void PopulateGraphicsPipelineCreateInfo(VkGraphicsPipelineCreateInfo * graphicsPipelineCreateInfo) const;
 
 	private:
 		VkViewport viewport;
 		VkRect2D scissor;
-		VkPipelineViewportStateCreateInfo viewportCreateInfo;
 		VkPipelineInputAssemblyStateCreateInfo inputAssemblyCreateInfo;
 		VkPipelineRasterizationStateCreateInfo rasterizationCreateInfo;
 		VkPipelineMultisampleStateCreateInfo multisampleCreateInfo;

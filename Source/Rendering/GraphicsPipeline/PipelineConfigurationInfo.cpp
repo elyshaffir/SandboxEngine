@@ -1,10 +1,9 @@
 #include <Rendering/GraphicsPipeline/PipelineConfigurationInfo.h>
 
 sandbox::PipelineConfigurationInfo::PipelineConfigurationInfo(VkExtent2D windowExtent)
-		: viewport({ }), scissor({ }), viewportCreateInfo({ }), inputAssemblyCreateInfo({ }),
-		  rasterizationCreateInfo({ }), multisampleCreateInfo({ }), colorBlendAttachment({ }),
-		  colorBlendCreateInfo({ }), depthStencilCreateInfo({ }), pipelineLayout(VK_NULL_HANDLE),
-		  renderPass(VK_NULL_HANDLE), subpass(0)
+		: viewport({ }), scissor({ }), inputAssemblyCreateInfo({ }), rasterizationCreateInfo({ }),
+		  multisampleCreateInfo({ }), colorBlendAttachment({ }), colorBlendCreateInfo({ }), depthStencilCreateInfo({ }),
+		  pipelineLayout(VK_NULL_HANDLE), renderPass(VK_NULL_HANDLE), subpass(0)
 {
 	Create(windowExtent);
 }
@@ -22,12 +21,6 @@ void sandbox::PipelineConfigurationInfo::Create(VkExtent2D windowExtent)
 
 	scissor.offset = {0, 0};
 	scissor.extent = windowExtent;
-
-	viewportCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-	viewportCreateInfo.viewportCount = 1;
-	viewportCreateInfo.pViewports = &viewport;
-	viewportCreateInfo.scissorCount = 1;
-	viewportCreateInfo.pScissors = &scissor;
 
 	rasterizationCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	rasterizationCreateInfo.depthClampEnable = VK_FALSE;
@@ -60,11 +53,17 @@ void sandbox::PipelineConfigurationInfo::Create(VkExtent2D windowExtent)
 	depthStencilCreateInfo.stencilTestEnable = VK_FALSE;
 }
 
+void sandbox::PipelineConfigurationInfo::PopulateViewportCreateInfo(
+		VkPipelineViewportStateCreateInfo * viewportCreateInfo) const
+{
+	viewportCreateInfo->pViewports = &viewport;
+	viewportCreateInfo->pScissors = &scissor;
+}
+
 void sandbox::PipelineConfigurationInfo::PopulateGraphicsPipelineCreateInfo(
 		VkGraphicsPipelineCreateInfo * graphicsPipelineCreateInfo) const
 {
 	graphicsPipelineCreateInfo->pInputAssemblyState = &inputAssemblyCreateInfo;
-	graphicsPipelineCreateInfo->pViewportState = &viewportCreateInfo;
 	graphicsPipelineCreateInfo->pRasterizationState = &rasterizationCreateInfo;
 	graphicsPipelineCreateInfo->pMultisampleState = &multisampleCreateInfo;
 	graphicsPipelineCreateInfo->pColorBlendState = &colorBlendCreateInfo;
