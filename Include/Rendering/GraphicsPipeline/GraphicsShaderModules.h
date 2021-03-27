@@ -2,7 +2,7 @@
 #define SANDBOXENGINE_GRAPHICSSHADERMODULES_H
 
 #include <string>
-#include <vector>
+#include <array>
 
 #include <vulkan/vulkan.h>
 
@@ -19,7 +19,9 @@ namespace sandbox
 	public:
 		GraphicsShaderModules(VkDevice device, const GraphicsShaderPaths & shaderPaths);
 
-		void Destroy(VkDevice device);
+		std::array<VkPipelineShaderStageCreateInfo, 2> GetCreateInfos() const;
+
+		void Destroy(VkDevice device) const;
 
 	private:
 		VkShaderModule vertexShaderModule;

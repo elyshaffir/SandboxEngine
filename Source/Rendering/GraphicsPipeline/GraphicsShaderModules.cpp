@@ -23,7 +23,23 @@ sandbox::GraphicsShaderModules::GraphicsShaderModules(VkDevice device, const Gra
 	CreateShaderModule(device, FileIO::ReadFile(shaderPaths.fragmentShaderPath), &fragmentShaderModule);
 }
 
-void sandbox::GraphicsShaderModules::Destroy(VkDevice device)
+std::array<VkPipelineShaderStageCreateInfo, 2> sandbox::GraphicsShaderModules::GetCreateInfos() const
+{
+	std::array<VkPipelineShaderStageCreateInfo, 2> createInfos = { };
+	createInfos[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	createInfos[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+	createInfos[0].module = vertexShaderModule;
+	createInfos[0].pName = "main";
+
+	createInfos[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	createInfos[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	createInfos[1].module = fragmentShaderModule;
+	createInfos[1].pName = "main";
+
+	return createInfos;
+}
+
+void sandbox::GraphicsShaderModules::Destroy(VkDevice device) const
 {
 	vkDestroyShaderModule(device, vertexShaderModule, nullptr);
 	vkDestroyShaderModule(device, fragmentShaderModule, nullptr);

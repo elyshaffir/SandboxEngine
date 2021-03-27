@@ -22,9 +22,6 @@ namespace sandbox
 		bool ShouldClose();
 
 	private:
-		static constexpr uint16_t DEFAULT_HEIGHT = 600;
-		static constexpr uint16_t DEFAULT_WIDTH = 800;
-
 		inline static bool initialized = false;
 
 		const uint16_t width;
