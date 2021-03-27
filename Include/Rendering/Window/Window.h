@@ -15,17 +15,19 @@ namespace sandbox
 	public:
 		GLFWwindow * window;
 
-		Window(uint16_t width, uint16_t height, std::string title);
+		Window(uint32_t width, uint32_t height, std::string title);
 
 		~Window();
 
 		bool ShouldClose();
 
+		VkExtent2D GenerateExtent();
+
 	private:
 		inline static bool initialized = false;
 
-		const uint16_t width;
-		const uint16_t height;
+		const uint32_t width;
+		const uint32_t height;
 		std::string title;
 
 		void Create();

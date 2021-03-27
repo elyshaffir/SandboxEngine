@@ -8,9 +8,9 @@ namespace sandbox
 	class PipelineConfigurationInfo
 	{
 	public:
-		PipelineConfigurationInfo(uint16_t width, uint16_t height);
+		explicit PipelineConfigurationInfo(VkExtent2D windowExtent);
 
-		void Create(uint16_t width, uint16_t height);
+		void Create(VkExtent2D windowExtent);
 
 		void PopulateGraphicsPipelineCreateInfo(VkGraphicsPipelineCreateInfo * graphicsPipelineCreateInfo) const;
 

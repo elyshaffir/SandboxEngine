@@ -1,27 +1,27 @@
 #include <Rendering/GraphicsPipeline/PipelineConfigurationInfo.h>
 
-sandbox::PipelineConfigurationInfo::PipelineConfigurationInfo(uint16_t width, uint16_t height)
+sandbox::PipelineConfigurationInfo::PipelineConfigurationInfo(VkExtent2D windowExtent)
 		: viewport({ }), scissor({ }), viewportCreateInfo({ }), inputAssemblyCreateInfo({ }),
 		  rasterizationCreateInfo({ }), multisampleCreateInfo({ }), colorBlendAttachment({ }),
 		  colorBlendCreateInfo({ }), depthStencilCreateInfo({ }), pipelineLayout(VK_NULL_HANDLE),
 		  renderPass(VK_NULL_HANDLE), subpass(0)
 {
-	Create(width, height);
+	Create(windowExtent);
 }
 
-void sandbox::PipelineConfigurationInfo::Create(uint16_t width, uint16_t height)
+void sandbox::PipelineConfigurationInfo::Create(VkExtent2D windowExtent)
 {
 	inputAssemblyCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	inputAssemblyCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	inputAssemblyCreateInfo.primitiveRestartEnable = VK_FALSE;
 
-	viewport.width = static_cast<float>(width);
-	viewport.height = static_cast<float>(height);
+	viewport.width = static_cast<float>(windowExtent.width);
+	viewport.height = static_cast<float>(windowExtent.height);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
 	scissor.offset = {0, 0};
-	scissor.extent = {width, height};
+	scissor.extent = windowExtent;
 
 	viewportCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	viewportCreateInfo.viewportCount = 1;

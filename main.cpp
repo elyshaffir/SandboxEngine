@@ -17,7 +17,7 @@ int main(int argc, char * argv[])
 			"compiled-shaders/default_fragment.spv"
 	};
 
-	PipelineConfigurationInfo pipelineConfigurationInfo(800, 600);
+	PipelineConfigurationInfo pipelineConfigurationInfo({800, 600});
 
 	sandbox::Renderer renderer(800, 600, "Good job, me!", defaultShaders, pipelineConfigurationInfo);
 
