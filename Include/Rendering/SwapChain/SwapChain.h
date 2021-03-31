@@ -10,6 +10,8 @@ namespace sandbox
 	class SwapChain
 	{
 	private:
+		static constexpr size_t MAX_FRAMES_IN_FLIGHT = 2;
+
 		VkSwapchainKHR swapChain;
 		VkFormat imageFormat;
 		VkExtent2D extent; // TODO: Am i needed?
@@ -35,6 +37,8 @@ namespace sandbox
 		void CreateDepthResources(VkDevice device, VkPhysicalDevice physicalDevice);
 
 		void CreateFramebuffers(VkDevice device);
+
+		void CreateSyncObjects(VkDevice device);
 	};
 }
 
