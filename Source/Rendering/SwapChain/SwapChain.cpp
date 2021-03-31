@@ -314,3 +314,26 @@ void sandbox::SwapChain::CreateDepthResources(VkDevice device, VkPhysicalDevice 
 		}
 	}
 }
+
+void sandbox::SwapChain::CreateFramebuffers(VkDevice device)
+{
+	framebuffers.resize(images.size());
+	for (size_t i = 0; i < images.size(); i++)
+	{
+		std::array<VkImageView, 2> attachments = {imageViews[i], depthImageViews[i]};
+
+		VkFramebufferCreateInfo framebufferInfo = { };
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = renderPass;
+		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+		framebufferInfo.pAttachments = attachments.data();
+		framebufferInfo.width = extent.width;
+		framebufferInfo.height = extent.height;
+		framebufferInfo.layers = 1;
+
+		if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &framebuffers[i]) != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to create framebuffer");
+		}
+	}
+}
