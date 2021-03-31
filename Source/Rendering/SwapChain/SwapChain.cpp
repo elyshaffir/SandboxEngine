@@ -84,7 +84,7 @@ static VkFormat FindDepthFormat(VkPhysicalDevice physicalDevice)
 			physicalDevice,
 			{VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
 			VK_IMAGE_TILING_OPTIMAL,
-			VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
+			VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 }
 
 static uint32_t GetDeviceMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter,
@@ -157,13 +157,14 @@ void sandbox::SwapChain::Create(VkPhysicalDevice physicalDevice, VkDevice device
 	createInfo.imageArrayLayers = 1;
 	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-	QueueFamilyIndices indices = QueueFamilyIndices::FromDevice(physicalDevice);
+	QueueFamilyIndices indices = QueueFamilyIndices::FromDevice(physicalDevice, surface);
+	uint32_t queueFamilyIndices[2] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
 
 	if (indices.graphicsFamily.value() != indices.presentFamily.value())
 	{
 		createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
 		createInfo.queueFamilyIndexCount = 2;
-		createInfo.pQueueFamilyIndices = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+		createInfo.pQueueFamilyIndices = queueFamilyIndices;
 	}
 	else
 	{
@@ -272,11 +273,11 @@ void sandbox::SwapChain::CreateRenderPass(VkDevice device, VkPhysicalDevice phys
 
 void sandbox::SwapChain::CreateDepthResources(VkDevice device, VkPhysicalDevice physicalDevice)
 {
-	VkFormat depthFormat = FindDepthFormat();
+	VkFormat depthFormat = FindDepthFormat(physicalDevice);
 	VkExtent2D swapChainExtent = extent;
 
 	depthImages.resize(images.size());
-	depthImageMemorys.resize(images.size());
+	depthImageMemories.resize(images.size());
 	depthImageViews.resize(images.size());
 
 	for (int i = 0; i < depthImages.size(); i++)
@@ -297,7 +298,7 @@ void sandbox::SwapChain::CreateDepthResources(VkDevice device, VkPhysicalDevice 
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 		CreateImageWithInfo(device, physicalDevice, imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImages[i],
-							depthImageMemorys[i]);
+							depthImageMemories[i]);
 
 		VkImageViewCreateInfo viewInfo = { };
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
