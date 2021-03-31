@@ -87,6 +87,50 @@ static VkFormat FindDepthFormat(VkPhysicalDevice physicalDevice)
 			VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
 }
 
+static uint32_t GetDeviceMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter,
+									VkMemoryPropertyFlags properties)
+{
+	VkPhysicalDeviceMemoryProperties memoryProperties = { };
+	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
+	for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++)
+	{
+		if ((typeFilter & (1 << i)) && (memoryProperties.memoryTypes[i].propertyFlags & properties) == properties)
+		{
+			return i;
+		}
+	}
+
+	throw std::runtime_error("Failed to find suitable memory type");
+}
+
+static void CreateImageWithInfo(VkDevice device, VkPhysicalDevice physicalDevice,
+								const VkImageCreateInfo & imageInfo, VkMemoryPropertyFlags properties, VkImage & image,
+								VkDeviceMemory & imageMemory)
+{
+	if (vkCreateImage(device, &imageInfo, nullptr, &image) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create image");
+	}
+
+	VkMemoryRequirements memoryRequirements = { };
+	vkGetImageMemoryRequirements(device, image, &memoryRequirements);
+
+	VkMemoryAllocateInfo allocInfo = { };
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memoryRequirements.size;
+	allocInfo.memoryTypeIndex = GetDeviceMemoryType(physicalDevice, memoryRequirements.memoryTypeBits, properties);
+
+	if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to allocate image memory");
+	}
+
+	if (vkBindImageMemory(device, image, imageMemory, 0) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to bind image memory");
+	}
+}
+
 void sandbox::SwapChain::Create(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface,
 								VkExtent2D windowExtent)
 {
@@ -223,5 +267,50 @@ void sandbox::SwapChain::CreateRenderPass(VkDevice device, VkPhysicalDevice phys
 	if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create render pass");
+	}
+}
+
+void sandbox::SwapChain::CreateDepthResources(VkDevice device, VkPhysicalDevice physicalDevice)
+{
+	VkFormat depthFormat = FindDepthFormat();
+	VkExtent2D swapChainExtent = extent;
+
+	depthImages.resize(images.size());
+	depthImageMemorys.resize(images.size());
+	depthImageViews.resize(images.size());
+
+	for (int i = 0; i < depthImages.size(); i++)
+	{
+		VkImageCreateInfo imageInfo = { };
+		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		imageInfo.imageType = VK_IMAGE_TYPE_2D;
+		imageInfo.extent.width = extent.width;
+		imageInfo.extent.height = extent.height;
+		imageInfo.extent.depth = 1;
+		imageInfo.mipLevels = 1;
+		imageInfo.arrayLayers = 1;
+		imageInfo.format = depthFormat;
+		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+		CreateImageWithInfo(device, physicalDevice, imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImages[i],
+							depthImageMemorys[i]);
+
+		VkImageViewCreateInfo viewInfo = { };
+		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		viewInfo.image = depthImages[i];
+		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		viewInfo.format = depthFormat;
+		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		viewInfo.subresourceRange.levelCount = 1;
+		viewInfo.subresourceRange.layerCount = 1;
+
+		if (vkCreateImageView(device, &viewInfo, nullptr, &depthImageViews[i]) != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to create texture image view");
+		}
 	}
 }

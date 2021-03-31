@@ -30,7 +30,9 @@ namespace sandbox
 
 		void CreateImageViews(VkDevice device);
 
-		void CreateRenderPass(VkDevice device);
+		void CreateRenderPass(VkDevice device, VkPhysicalDevice physicalDevice);
+
+		void CreateDepthResources(VkDevice device, VkPhysicalDevice physicalDevice);
 	};
 }
 
