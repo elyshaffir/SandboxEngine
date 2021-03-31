@@ -1,6 +1,6 @@
 #include <Rendering/Device/Device.h>
 #include <Rendering/Device/QueueFamilyIndices.h>
-#include <Rendering/Device/SwapChainSupportDetails.h>
+#include <Rendering/SwapChain/SwapChainSupportDetails.h>
 #include <Rendering/Instance/Instance.h>
 
 #include <set>

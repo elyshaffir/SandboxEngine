@@ -1,4 +1,4 @@
-#include <Rendering/Device/SwapChainSupportDetails.h>
+#include <Rendering/SwapChain/SwapChainSupportDetails.h>
 
 sandbox::SwapChainSupportDetails sandbox::SwapChainSupportDetails::FromDevice(VkPhysicalDevice physicalDevice,
 																			  VkSurfaceKHR surface)
