@@ -15,6 +15,12 @@ namespace sandbox
 		std::vector<VkPresentModeKHR> presentModes;
 
 		static sandbox::SwapChainSupportDetails FromDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
+
+		VkSurfaceFormatKHR ChooseSurfaceFormat();
+
+		VkPresentModeKHR ChoosePresentMode();
+
+		VkExtent2D ChooseExtent(VkExtent2D windowExtent) const;
 	};
 }
 

@@ -2,64 +2,8 @@
 #include <Rendering/SwapChain/SwapChainSupportDetails.h>
 #include <Rendering/Device/QueueFamilyIndices.h>
 
-#include <limits>
 #include <array>
-
-#include <glog/logging.h>
-
-static VkSurfaceFormatKHR ChooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR> & availableFormats)
-{
-	for (const auto & availableFormat : availableFormats)
-	{
-		if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM &&
-			availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
-		{
-			return availableFormat;
-		}
-	}
-
-	return availableFormats[0];
-}
-
-static VkPresentModeKHR ChoosePresentMode(const std::vector<VkPresentModeKHR> & availablePresentModes)
-{
-	for (const auto & availablePresentMode : availablePresentModes)
-	{
-		if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
-		{
-			LOG(INFO) << "Present mode: Mailbox";
-			return availablePresentMode;
-		}
-	}
-
-	// for (const auto &availablePresentMode : availablePresentModes) { // TODO resolve
-	//   if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
-	//     std::cout << "Present mode: Immediate" << std::endl;
-	//     return availablePresentMode;
-	//   }
-	// }
-
-	LOG(INFO) << "Present mode: V-Sync";
-	return VK_PRESENT_MODE_FIFO_KHR;
-}
-
-static VkExtent2D ChooseExtent(const VkSurfaceCapabilitiesKHR & capabilities, VkExtent2D windowExtent)
-{
-	if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
-	{
-		return capabilities.currentExtent;
-	}
-	else
-	{
-		VkExtent2D actualExtent = windowExtent;
-		actualExtent.width = std::max(capabilities.minImageExtent.width,
-									  std::min(capabilities.maxImageExtent.width, actualExtent.width));
-		actualExtent.height = std::max(capabilities.minImageExtent.height,
-									   std::min(capabilities.maxImageExtent.height, actualExtent.height));
-
-		return actualExtent;
-	}
-}
+#include <stdexcept>
 
 static VkFormat GetDeviceSupportedFormats(VkPhysicalDevice physicalDevice, const std::vector<VkFormat> & candidates,
 										  VkImageTiling tiling, VkFormatFeatureFlags features)
@@ -135,10 +79,10 @@ void sandbox::SwapChain::Create(VkPhysicalDevice physicalDevice, VkDevice device
 								VkExtent2D windowExtent)
 {
 	SwapChainSupportDetails supportDetails = SwapChainSupportDetails::FromDevice(physicalDevice, surface);
+	VkSurfaceFormatKHR surfaceFormat = supportDetails.ChooseSurfaceFormat();
+	VkPresentModeKHR presentMode = supportDetails.ChoosePresentMode();
 
-	VkSurfaceFormatKHR surfaceFormat = ChooseSurfaceFormat(supportDetails.formats);
-	VkPresentModeKHR presentMode = ChoosePresentMode(supportDetails.presentModes);
-	extent = ChooseExtent(supportDetails.capabilities, windowExtent);
+	extent = supportDetails.ChooseExtent(windowExtent);
 
 	uint32_t imageCount = supportDetails.capabilities.minImageCount + 1;
 	if (supportDetails.capabilities.maxImageCount > 0 && imageCount > supportDetails.capabilities.maxImageCount)
@@ -274,7 +218,6 @@ void sandbox::SwapChain::CreateRenderPass(VkDevice device, VkPhysicalDevice phys
 void sandbox::SwapChain::CreateDepthResources(VkDevice device, VkPhysicalDevice physicalDevice)
 {
 	VkFormat depthFormat = FindDepthFormat(physicalDevice);
-	VkExtent2D swapChainExtent = extent;
 
 	depthImages.resize(images.size());
 	depthImageMemories.resize(images.size());
