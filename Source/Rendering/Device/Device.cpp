@@ -1,7 +1,8 @@
 #include <Rendering/Device/Device.h>
-#include <Rendering/Device/QueueFamilyIndices.h>
-#include <Rendering/SwapChain/SwapChainSupportDetails.h>
+
+#ifdef ENABLE_VALIDATION_LAYERS
 #include <Rendering/Instance/Instance.h>
+#endif
 
 #include <set>
 
@@ -31,24 +32,20 @@ static bool IsDeviceExtensionsSupported(VkPhysicalDevice physicalDevice)
 	return requiredExtensions.empty();
 }
 
-static bool IsDeviceSuitable(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface)
+static bool IsDeviceRequiredFeaturesSupported(VkPhysicalDevice physicalDevice)
 {
-	sandbox::QueueFamilyIndices indices = sandbox::QueueFamilyIndices::FromDevice(physicalDevice, surface);
-
-	bool extensionsSupported = IsDeviceExtensionsSupported(physicalDevice);
-
-	bool swapChainAdequate = false;
-	if (extensionsSupported)
-	{
-		sandbox::SwapChainSupportDetails swapChainSupport =
-				sandbox::SwapChainSupportDetails::FromDevice(physicalDevice, surface);
-		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
-	}
-
 	VkPhysicalDeviceFeatures supportedFeatures = { };
 	vkGetPhysicalDeviceFeatures(physicalDevice, &supportedFeatures);
 
-	return indices.IsComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
+	return supportedFeatures.samplerAnisotropy;
+}
+
+static VkPhysicalDeviceFeatures GenerateRequiredDeviceFeatures()
+{
+	VkPhysicalDeviceFeatures deviceFeatures = { };
+	deviceFeatures.samplerAnisotropy = VK_TRUE;
+
+	return deviceFeatures;
 }
 
 sandbox::Device::Device(VkInstance instance, VkSurfaceKHR surface) : physicalDevice(VK_NULL_HANDLE),
@@ -59,8 +56,8 @@ sandbox::Device::Device(VkInstance instance, VkSurfaceKHR surface) : physicalDev
 																	 commandPool(VK_NULL_HANDLE)
 {
 	PickPhysicalDevice(instance, surface);
-	CreateLogicalDevice(surface);
-	CreateCommandPool(surface);
+	CreateLogicalDevice();
+	CreateCommandPool();
 }
 
 sandbox::Device::~Device()
@@ -83,9 +80,15 @@ void sandbox::Device::PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surfa
 
 	for (const auto & availableDevice : availableDevices)
 	{
-		if (IsDeviceSuitable(availableDevice, surface))
+		QueueFamilyIndices potentialQueueFamilyIndices = QueueFamilyIndices::FromDevice(availableDevice, surface);
+		SwapChainSupport potentialSwapChainSupport = SwapChainSupport::FromDevice(availableDevice, surface);
+
+		if (potentialQueueFamilyIndices.IsComplete() && IsDeviceExtensionsSupported(availableDevice) &&
+			potentialSwapChainSupport.IsComplete() && IsDeviceRequiredFeaturesSupported(availableDevice))
 		{
 			physicalDevice = availableDevice;
+			queueFamilyIndices = potentialQueueFamilyIndices;
+			swapChainSupport = potentialSwapChainSupport;
 			break;
 		}
 	}
@@ -99,12 +102,12 @@ void sandbox::Device::PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surfa
 	LOG(INFO) << "Physical device: " << physicalDeviceProperties.deviceName;
 }
 
-void sandbox::Device::CreateLogicalDevice(VkSurfaceKHR surface)
+void sandbox::Device::CreateLogicalDevice()
 {
-	QueueFamilyIndices indices = sandbox::QueueFamilyIndices::FromDevice(physicalDevice, surface);
-
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-	std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+	std::set<uint32_t> uniqueQueueFamilies = {
+			queueFamilyIndices.graphicsFamily.value(), queueFamilyIndices.presentFamily.value()
+	};
 
 	float queuePriority = 1.0f;
 	for (uint32_t queueFamily : uniqueQueueFamilies)
@@ -117,14 +120,13 @@ void sandbox::Device::CreateLogicalDevice(VkSurfaceKHR surface)
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
 
-	VkPhysicalDeviceFeatures deviceFeatures = { };
-	deviceFeatures.samplerAnisotropy = VK_TRUE;
+	VkPhysicalDeviceFeatures requiredDeviceFeatures = GenerateRequiredDeviceFeatures();
 
 	VkDeviceCreateInfo createInfo = { };
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 	createInfo.pQueueCreateInfos = queueCreateInfos.data();
-	createInfo.pEnabledFeatures = &deviceFeatures;
+	createInfo.pEnabledFeatures = &requiredDeviceFeatures;
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(DEVICE_EXTENSIONS.size());
 	createInfo.ppEnabledExtensionNames = DEVICE_EXTENSIONS.data();
 
@@ -138,14 +140,12 @@ void sandbox::Device::CreateLogicalDevice(VkSurfaceKHR surface)
 		throw std::runtime_error("Failed to create logical device");
 	}
 
-	vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
-	vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
+	vkGetDeviceQueue(device, queueFamilyIndices.graphicsFamily.value(), 0, &graphicsQueue);
+	vkGetDeviceQueue(device, queueFamilyIndices.presentFamily.value(), 0, &presentQueue);
 }
 
-void sandbox::Device::CreateCommandPool(VkSurfaceKHR surface)
+void sandbox::Device::CreateCommandPool()
 {
-	QueueFamilyIndices queueFamilyIndices = QueueFamilyIndices::FromDevice(physicalDevice, surface);
-
 	VkCommandPoolCreateInfo poolInfo = { };
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();

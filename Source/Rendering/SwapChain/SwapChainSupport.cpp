@@ -1,14 +1,14 @@
-#include <Rendering/SwapChain/SwapChainSupportDetails.h>
+#include <Rendering/SwapChain/SwapChainSupport.h>
 
 #include <limits>
 #include <algorithm>
 
 #include <glog/logging.h>
 
-sandbox::SwapChainSupportDetails sandbox::SwapChainSupportDetails::FromDevice(VkPhysicalDevice physicalDevice,
-																			  VkSurfaceKHR surface)
+sandbox::SwapChainSupport sandbox::SwapChainSupport::FromDevice(VkPhysicalDevice physicalDevice,
+																VkSurfaceKHR surface)
 {
-	SwapChainSupportDetails details = { };
+	SwapChainSupport details = { };
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &details.capabilities);
 
 	uint32_t formatCount = 0;
@@ -32,7 +32,12 @@ sandbox::SwapChainSupportDetails sandbox::SwapChainSupportDetails::FromDevice(Vk
 	return details;
 }
 
-VkSurfaceFormatKHR sandbox::SwapChainSupportDetails::ChooseSurfaceFormat()
+bool sandbox::SwapChainSupport::IsComplete() const
+{
+	return !formats.empty() && !presentModes.empty();
+}
+
+VkSurfaceFormatKHR sandbox::SwapChainSupport::ChooseSurfaceFormat()
 {
 	for (const auto & availableFormat : formats)
 	{
@@ -46,7 +51,7 @@ VkSurfaceFormatKHR sandbox::SwapChainSupportDetails::ChooseSurfaceFormat()
 	return formats[0];
 }
 
-VkPresentModeKHR sandbox::SwapChainSupportDetails::ChoosePresentMode()
+VkPresentModeKHR sandbox::SwapChainSupport::ChoosePresentMode()
 {
 	for (const auto & availablePresentMode : presentModes)
 	{
@@ -68,7 +73,7 @@ VkPresentModeKHR sandbox::SwapChainSupportDetails::ChoosePresentMode()
 	return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-VkExtent2D sandbox::SwapChainSupportDetails::ChooseExtent(VkExtent2D windowExtent) const
+VkExtent2D sandbox::SwapChainSupport::ChooseExtent(VkExtent2D windowExtent) const
 {
 	if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
 	{

@@ -1,6 +1,9 @@
 #ifndef SANDBOXENGINE_DEVICE_H
 #define SANDBOXENGINE_DEVICE_H
 
+#include <Rendering/Device/QueueFamilyIndices.h>
+#include <Rendering/SwapChain/SwapChainSupport.h>
+
 #include <array>
 
 #include <vulkan/vulkan.h>
@@ -24,12 +27,14 @@ namespace sandbox
 		VkQueue graphicsQueue;
 		VkQueue presentQueue;
 		VkCommandPool commandPool;
+		QueueFamilyIndices queueFamilyIndices;
+		SwapChainSupport swapChainSupport;
 
 		void PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface);
 
-		void CreateLogicalDevice(VkSurfaceKHR surface);
+		void CreateLogicalDevice();
 
-		void CreateCommandPool(VkSurfaceKHR surface);
+		void CreateCommandPool();
 	};
 }
 

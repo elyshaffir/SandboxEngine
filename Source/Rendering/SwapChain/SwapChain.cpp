@@ -1,5 +1,5 @@
 #include <Rendering/SwapChain/SwapChain.h>
-#include <Rendering/SwapChain/SwapChainSupportDetails.h>
+#include <Rendering/SwapChain/SwapChainSupport.h>
 #include <Rendering/Device/QueueFamilyIndices.h>
 
 #include <array>
@@ -78,7 +78,7 @@ static void CreateImageWithInfo(VkDevice device, VkPhysicalDevice physicalDevice
 void sandbox::SwapChain::Create(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface,
 								VkExtent2D windowExtent)
 {
-	SwapChainSupportDetails supportDetails = SwapChainSupportDetails::FromDevice(physicalDevice, surface);
+	SwapChainSupport supportDetails = SwapChainSupport::FromDevice(physicalDevice, surface);
 	VkSurfaceFormatKHR surfaceFormat = supportDetails.ChooseSurfaceFormat();
 	VkPresentModeKHR presentMode = supportDetails.ChoosePresentMode();
 
