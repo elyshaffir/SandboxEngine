@@ -1,7 +1,9 @@
 #include <Rendering/Device/Device.h>
 
 #ifdef ENABLE_VALIDATION_LAYERS
+
 #include <Rendering/Instance/Instance.h>
+
 #endif
 
 #include <set>
@@ -48,16 +50,14 @@ static VkPhysicalDeviceFeatures GenerateRequiredDeviceFeatures()
 	return deviceFeatures;
 }
 
-sandbox::Device::Device(VkInstance instance, VkSurfaceKHR surface) : physicalDevice(VK_NULL_HANDLE),
-																	 physicalDeviceProperties(),
-																	 device(VK_NULL_HANDLE),
-																	 graphicsQueue(VK_NULL_HANDLE),
-																	 presentQueue(VK_NULL_HANDLE),
-																	 commandPool(VK_NULL_HANDLE)
+sandbox::Device::Device(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent)
+		: physicalDevice(VK_NULL_HANDLE), physicalDeviceProperties(), device(VK_NULL_HANDLE),
+		  graphicsQueue(VK_NULL_HANDLE), presentQueue(VK_NULL_HANDLE), commandPool(VK_NULL_HANDLE), swapChain()
 {
 	PickPhysicalDevice(instance, surface);
 	CreateLogicalDevice();
 	CreateCommandPool();
+	CreateSwapChain(surface, windowExtent);
 }
 
 sandbox::Device::~Device()
@@ -155,4 +155,9 @@ void sandbox::Device::CreateCommandPool()
 	{
 		throw std::runtime_error("Failed to create command pool");
 	}
+}
+
+void sandbox::Device::CreateSwapChain(VkSurfaceKHR surface, VkExtent2D windowExtent)
+{
+	swapChain = SwapChain(physicalDevice, device, surface, windowExtent);
 }

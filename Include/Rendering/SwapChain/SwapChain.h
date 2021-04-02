@@ -9,14 +9,19 @@ namespace sandbox
 {
 	class SwapChain
 	{
+	public:
+		SwapChain() = default;
+
+		SwapChain(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface, VkExtent2D windowExtent);
+
 	private:
 		static constexpr size_t MAX_FRAMES_IN_FLIGHT = 2;
 
-		VkSwapchainKHR swapChain;
-		VkFormat imageFormat;
-		VkExtent2D extent; // TODO: Am i needed?
+		VkSwapchainKHR swapChain = VK_NULL_HANDLE;
+		VkFormat imageFormat = VK_FORMAT_UNDEFINED;
+		VkExtent2D extent = { };
 		std::vector<VkFramebuffer> framebuffers;
-		VkRenderPass renderPass;
+		VkRenderPass renderPass = VK_NULL_HANDLE;
 		std::vector<VkImage> depthImages;
 		std::vector<VkDeviceMemory> depthImageMemories;
 		std::vector<VkImageView> depthImageViews;

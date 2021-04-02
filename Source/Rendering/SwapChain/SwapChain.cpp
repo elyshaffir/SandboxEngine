@@ -75,6 +75,18 @@ static void CreateImageWithInfo(VkDevice device, VkPhysicalDevice physicalDevice
 	}
 }
 
+sandbox::SwapChain::SwapChain(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface,
+							  VkExtent2D windowExtent)
+		: swapChain(VK_NULL_HANDLE), imageFormat(VK_FORMAT_UNDEFINED), extent({ }), renderPass(VK_NULL_HANDLE)
+{
+	Create(physicalDevice, device, surface, windowExtent);
+	CreateImageViews(device);
+	CreateRenderPass(device, physicalDevice);
+	CreateDepthResources(device, physicalDevice);
+	CreateFramebuffers(device);
+	CreateSyncObjects(device);
+}
+
 void sandbox::SwapChain::Create(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface,
 								VkExtent2D windowExtent)
 {
@@ -83,6 +95,7 @@ void sandbox::SwapChain::Create(VkPhysicalDevice physicalDevice, VkDevice device
 	VkPresentModeKHR presentMode = supportDetails.ChoosePresentMode();
 
 	extent = supportDetails.ChooseExtent(windowExtent);
+	imageFormat = surfaceFormat.format;
 
 	uint32_t imageCount = supportDetails.capabilities.minImageCount + 1;
 	if (supportDetails.capabilities.maxImageCount > 0 && imageCount > supportDetails.capabilities.maxImageCount)
@@ -95,7 +108,7 @@ void sandbox::SwapChain::Create(VkPhysicalDevice physicalDevice, VkDevice device
 	createInfo.surface = surface;
 
 	createInfo.minImageCount = imageCount;
-	createInfo.imageFormat = surfaceFormat.format;
+	createInfo.imageFormat = imageFormat;
 	createInfo.imageColorSpace = surfaceFormat.colorSpace;
 	createInfo.imageExtent = extent;
 	createInfo.imageArrayLayers = 1;
@@ -129,8 +142,6 @@ void sandbox::SwapChain::Create(VkPhysicalDevice physicalDevice, VkDevice device
 	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
 	images.resize(imageCount);
 	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, images.data());
-
-	imageFormat = surfaceFormat.format;
 }
 
 void sandbox::SwapChain::CreateImageViews(VkDevice device)

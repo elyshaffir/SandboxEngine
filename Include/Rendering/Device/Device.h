@@ -3,6 +3,7 @@
 
 #include <Rendering/Device/QueueFamilyIndices.h>
 #include <Rendering/SwapChain/SwapChainSupport.h>
+#include <Rendering/SwapChain/SwapChain.h>
 
 #include <array>
 
@@ -17,7 +18,7 @@ namespace sandbox
 
 		static constexpr std::array<const char *, 1> DEVICE_EXTENSIONS = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
-		Device(VkInstance instance, VkSurfaceKHR surface);
+		Device(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent);
 
 		~Device();
 
@@ -29,12 +30,15 @@ namespace sandbox
 		VkCommandPool commandPool;
 		QueueFamilyIndices queueFamilyIndices;
 		SwapChainSupport swapChainSupport;
+		SwapChain swapChain;
 
 		void PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface);
 
 		void CreateLogicalDevice();
 
 		void CreateCommandPool();
+
+		void CreateSwapChain(VkSurfaceKHR surface, VkExtent2D windowExtent);
 	};
 }
 
