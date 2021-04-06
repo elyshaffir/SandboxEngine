@@ -1,7 +1,11 @@
 #ifndef SANDBOXENGINE_SWAPCHAIN_H
 #define SANDBOXENGINE_SWAPCHAIN_H
 
+#include <Rendering/SwapChain/SwapChainSupport.h>
+#include <Rendering/Device/QueueFamilyIndices.h>
+
 #include <vector>
+#include <array>
 
 #include <vulkan/vulkan.h>
 
@@ -12,16 +16,15 @@ namespace sandbox
 	public:
 		SwapChain() = default;
 
-		SwapChain(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface, VkExtent2D windowExtent);
+		SwapChain(const SwapChainSupport & supportDetails, const QueueFamilyIndices & queueFamilyIndices,
+				  VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface);
 
 	private:
 		static constexpr size_t MAX_FRAMES_IN_FLIGHT = 2;
 
-		VkSwapchainKHR swapChain = VK_NULL_HANDLE;
-		VkFormat imageFormat = VK_FORMAT_UNDEFINED;
-		VkExtent2D extent = { };
+		VkSwapchainKHR swapChain;
+		VkRenderPass renderPass;
 		std::vector<VkFramebuffer> framebuffers;
-		VkRenderPass renderPass = VK_NULL_HANDLE;
 		std::vector<VkImage> depthImages;
 		std::vector<VkDeviceMemory> depthImageMemories;
 		std::vector<VkImageView> depthImageViews;
@@ -31,17 +34,18 @@ namespace sandbox
 		std::vector<VkSemaphore> renderFinishedSemaphores;
 		std::vector<VkFence> inFlightFences;
 		std::vector<VkFence> imagesInFlight;
-		uint32_t currentFrame = 0; // TODO: Can I be moved to the Renderer?
 
-		void Create(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface, VkExtent2D windowExtent);
+		void Create(const SwapChainSupport & supportDetails, const QueueFamilyIndices & queueFamilyIndices,
+					VkDevice device, VkSurfaceKHR surface);
 
-		void CreateImageViews(VkDevice device);
+		void CreateImageViews(const SwapChainSupport & supportDetails, VkDevice device);
 
-		void CreateRenderPass(VkDevice device, VkPhysicalDevice physicalDevice);
+		void CreateRenderPass(const SwapChainSupport & supportDetails, VkDevice device);
 
-		void CreateDepthResources(VkDevice device, VkPhysicalDevice physicalDevice);
+		void CreateDepthResources(const SwapChainSupport & supportDetails, VkDevice device,
+								  VkPhysicalDevice physicalDevice);
 
-		void CreateFramebuffers(VkDevice device);
+		void CreateFramebuffers(const SwapChainSupport & supportDetails, VkDevice device);
 
 		void CreateSyncObjects(VkDevice device);
 	};

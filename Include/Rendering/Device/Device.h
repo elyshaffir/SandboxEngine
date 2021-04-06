@@ -32,13 +32,13 @@ namespace sandbox
 		SwapChainSupport swapChainSupport;
 		SwapChain swapChain;
 
-		void PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface);
+		void PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent);
 
 		void CreateLogicalDevice();
 
 		void CreateCommandPool();
 
-		void CreateSwapChain(VkSurfaceKHR surface, VkExtent2D windowExtent);
+		void CreateSwapChain(VkSurfaceKHR surface);
 	};
 }
 

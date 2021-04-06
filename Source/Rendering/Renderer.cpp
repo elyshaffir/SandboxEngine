@@ -7,7 +7,7 @@ sandbox::Renderer::Renderer(uint16_t windowWidth, uint16_t windowHeight, std::st
 		: window(windowWidth, windowHeight, std::move(windowTitle)), instance(),
 		  surface(instance.instance, window.window),
 		  device(instance.instance, surface.surface, window.GenerateExtent()),
-		  pipeline(device.device, shaderPaths, pipelineConfigurationInfo)
+		  pipeline(device.device, shaderPaths, pipelineConfigurationInfo), currentFrame()
 {
 }
 

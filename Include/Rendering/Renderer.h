@@ -25,6 +25,7 @@ namespace sandbox
 		Surface surface;
 		Device device;
 		GraphicsPipeline pipeline;
+		uint32_t currentFrame;
 	};
 }
 

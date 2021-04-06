@@ -1,7 +1,10 @@
 #ifndef SANDBOXENGINE_SWAPCHAINSUPPORT_H
 #define SANDBOXENGINE_SWAPCHAINSUPPORT_H
 
+#include <Rendering/Device/QueueFamilyIndices.h>
+
 #include <vector>
+#include <array>
 
 #include <vulkan/vulkan.h>
 
@@ -10,22 +13,50 @@ namespace sandbox
 	/*
 	 * Represents the support of a certain physical device and surface duo for swap chains.
 	 */
-	struct SwapChainSupport
+	class SwapChainSupport
 	{
 	public:
-		VkSurfaceCapabilitiesKHR capabilities;
-		std::vector<VkSurfaceFormatKHR> formats;
-		std::vector<VkPresentModeKHR> presentModes;
+		SwapChainSupport() = default;
 
-		static sandbox::SwapChainSupport FromDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
+		SwapChainSupport(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkExtent2D windowExtent);
 
 		bool IsComplete() const;
 
-		VkSurfaceFormatKHR ChooseSurfaceFormat();
+		void PopulateSwapChainCreateInfo(VkSwapchainCreateInfoKHR * swapChainCreateInfo) const;
 
-		VkPresentModeKHR ChoosePresentMode();
+		void PopulateDepthAttachment(VkAttachmentDescription * depthAttachment) const;
 
-		VkExtent2D ChooseExtent(VkExtent2D windowExtent) const;
+		void PopulateImageViewCreateInfo(VkImageViewCreateInfo * imageViewCreateInfo) const;
+
+		void PopulateColorAttachment(VkAttachmentDescription * colorAttachment) const;
+
+		void PopulateDepthImageCreateInfo(VkImageCreateInfo * depthImageCreateInfo) const;
+
+		void PopulateDepthImageViewCreateInfo(VkImageViewCreateInfo * depthImageViewCreateInfo) const;
+
+		void PopulateFramebufferCreateInfo(VkFramebufferCreateInfo * framebufferCreateInfo) const;
+
+	private:
+		VkSurfaceCapabilitiesKHR capabilities;
+		std::vector<VkSurfaceFormatKHR> formats;
+		std::vector<VkPresentModeKHR> presentModes;
+		VkSurfaceFormatKHR chosenSurfaceFormat;
+		VkPresentModeKHR chosenPresentMode;
+		VkExtent2D chosenExtent;
+		uint32_t imageCount;
+		VkFormat depthFormat;
+
+		void Create(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
+
+		void ChooseSurfaceFormat();
+
+		void ChoosePresentMode();
+
+		void ChooseExtent(VkExtent2D windowExtent);
+
+		void CalculateImageCount();
+
+		void FindDepthFormat(VkPhysicalDevice physicalDevice);
 	};
 }
 

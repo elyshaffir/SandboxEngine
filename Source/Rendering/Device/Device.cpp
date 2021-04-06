@@ -51,13 +51,13 @@ static VkPhysicalDeviceFeatures GenerateRequiredDeviceFeatures()
 }
 
 sandbox::Device::Device(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent)
-		: physicalDevice(VK_NULL_HANDLE), physicalDeviceProperties(), device(VK_NULL_HANDLE),
-		  graphicsQueue(VK_NULL_HANDLE), presentQueue(VK_NULL_HANDLE), commandPool(VK_NULL_HANDLE), swapChain()
+		: physicalDevice(), physicalDeviceProperties(), device(), graphicsQueue(), presentQueue(), commandPool(),
+		  queueFamilyIndices(), swapChainSupport(), swapChain()
 {
-	PickPhysicalDevice(instance, surface);
+	PickPhysicalDevice(instance, surface, windowExtent);
 	CreateLogicalDevice();
 	CreateCommandPool();
-	CreateSwapChain(surface, windowExtent);
+	CreateSwapChain(surface);
 }
 
 sandbox::Device::~Device()
@@ -66,7 +66,7 @@ sandbox::Device::~Device()
 	vkDestroyDevice(device, nullptr);
 }
 
-void sandbox::Device::PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface)
+void sandbox::Device::PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent)
 {
 	uint32_t deviceCount = 0;
 	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
@@ -80,8 +80,8 @@ void sandbox::Device::PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surfa
 
 	for (const auto & availableDevice : availableDevices)
 	{
-		QueueFamilyIndices potentialQueueFamilyIndices = QueueFamilyIndices::FromDevice(availableDevice, surface);
-		SwapChainSupport potentialSwapChainSupport = SwapChainSupport::FromDevice(availableDevice, surface);
+		QueueFamilyIndices potentialQueueFamilyIndices(availableDevice, surface);
+		SwapChainSupport potentialSwapChainSupport(availableDevice, surface, windowExtent);
 
 		if (potentialQueueFamilyIndices.IsComplete() && IsDeviceExtensionsSupported(availableDevice) &&
 			potentialSwapChainSupport.IsComplete() && IsDeviceRequiredFeaturesSupported(availableDevice))
@@ -105,20 +105,7 @@ void sandbox::Device::PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surfa
 void sandbox::Device::CreateLogicalDevice()
 {
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-	std::set<uint32_t> uniqueQueueFamilies = {
-			queueFamilyIndices.graphicsFamily.value(), queueFamilyIndices.presentFamily.value()
-	};
-
-	float queuePriority = 1.0f;
-	for (uint32_t queueFamily : uniqueQueueFamilies)
-	{
-		VkDeviceQueueCreateInfo queueCreateInfo = { };
-		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-		queueCreateInfo.queueFamilyIndex = queueFamily;
-		queueCreateInfo.queueCount = 1;
-		queueCreateInfo.pQueuePriorities = &queuePriority;
-		queueCreateInfos.push_back(queueCreateInfo);
-	}
+	queueFamilyIndices.FillQueueCreateInfos(queueCreateInfos);
 
 	VkPhysicalDeviceFeatures requiredDeviceFeatures = GenerateRequiredDeviceFeatures();
 
@@ -140,15 +127,14 @@ void sandbox::Device::CreateLogicalDevice()
 		throw std::runtime_error("Failed to create logical device");
 	}
 
-	vkGetDeviceQueue(device, queueFamilyIndices.graphicsFamily.value(), 0, &graphicsQueue);
-	vkGetDeviceQueue(device, queueFamilyIndices.presentFamily.value(), 0, &presentQueue);
+	queueFamilyIndices.GetDeviceQueues(device, &graphicsQueue, &presentQueue);
 }
 
 void sandbox::Device::CreateCommandPool()
 {
 	VkCommandPoolCreateInfo poolInfo = { };
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+	queueFamilyIndices.PopulateGraphicsCommandPoolCreateInfo(&poolInfo);
 	poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
 	if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
@@ -157,7 +143,7 @@ void sandbox::Device::CreateCommandPool()
 	}
 }
 
-void sandbox::Device::CreateSwapChain(VkSurfaceKHR surface, VkExtent2D windowExtent)
+void sandbox::Device::CreateSwapChain(VkSurfaceKHR surface)
 {
-	swapChain = SwapChain(physicalDevice, device, surface, windowExtent);
+	swapChain = SwapChain(swapChainSupport, queueFamilyIndices, physicalDevice, device, surface);
 }
