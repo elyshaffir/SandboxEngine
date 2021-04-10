@@ -7,6 +7,18 @@ sandbox::GraphicsPipeline::GraphicsPipeline(VkDevice device, const sandbox::Grap
 		pipeline(VK_NULL_HANDLE), shaderModules(device, shaderPaths)
 {
 	Create(device, configurationInfo);
+	CreateLayout(device);
+}
+
+void sandbox::GraphicsPipeline::Bind(VkCommandBuffer commandBuffer) const
+{
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+}
+
+void sandbox::GraphicsPipeline::Destroy(VkDevice device)
+{
+	shaderModules.Destroy(device);
+	vkDestroyPipeline(device, pipeline, nullptr);
 }
 
 void sandbox::GraphicsPipeline::Create(VkDevice device, const PipelineConfigurationInfo & configurationInfo)
@@ -35,13 +47,12 @@ void sandbox::GraphicsPipeline::Create(VkDevice device, const PipelineConfigurat
 	}
 }
 
-void sandbox::GraphicsPipeline::Bind(VkCommandBuffer commandBuffer) const
+void sandbox::GraphicsPipeline::CreateLayout(VkDevice device)
 {
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-}
-
-void sandbox::GraphicsPipeline::Destroy(VkDevice device)
-{
-	shaderModules.Destroy(device);
-	vkDestroyPipeline(device, pipeline, nullptr);
+	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = { };
+	pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	if (vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create pipeline layout");
+	}
 }

@@ -32,7 +32,6 @@ namespace sandbox
 		Device device;
 		GraphicsPipeline pipeline;
 
-		VkPipelineLayout pipelineLayout;
 		std::vector<VkCommandBuffer> commandBuffers;
 		uint32_t currentFrame;
 

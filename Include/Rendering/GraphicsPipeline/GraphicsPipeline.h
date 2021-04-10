@@ -13,8 +13,6 @@ namespace sandbox
 		GraphicsPipeline(VkDevice device, const GraphicsShaderPaths & shaderPaths,
 						 const PipelineConfigurationInfo & configurationInfo);
 
-		void Create(VkDevice device, const PipelineConfigurationInfo & configurationInfo);
-
 		void Bind(VkCommandBuffer commandBuffer) const;
 
 		void Destroy(VkDevice device);
@@ -22,6 +20,11 @@ namespace sandbox
 	private:
 		VkPipeline pipeline;
 		GraphicsShaderModules shaderModules;
+		VkPipelineLayout pipelineLayout;
+
+		void Create(VkDevice device, const PipelineConfigurationInfo & configurationInfo);
+
+		void CreateLayout(VkDevice device);
 	};
 }
 

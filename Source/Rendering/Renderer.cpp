@@ -52,16 +52,6 @@ void sandbox::Renderer::WaitIdle() const
 	vkDeviceWaitIdle(device.device);
 }
 
-void sandbox::Renderer::CreatePipelineLayout()
-{
-	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = { };
-	pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	if (vkCreatePipelineLayout(device.device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to create pipeline layout");
-	}
-}
-
 void sandbox::Renderer::CreatePipeline()
 {
 	PipelineConfigurationInfo pipelineConfigurationInfo = PipelineConfigurationInfo(swapchain_extent);
