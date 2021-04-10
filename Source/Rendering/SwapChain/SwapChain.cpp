@@ -58,8 +58,67 @@ sandbox::SwapChain::SwapChain(const SwapChainSupport & supportDetails, const Que
 	CreateSyncObjects(device);
 }
 
-void sandbox::SwapChain::Create(const SwapChainSupport & supportDetails,
-								const QueueFamilyIndices & queueFamilyIndices,
+VkResult sandbox::SwapChain::AcquireNextImage(VkDevice device, uint32_t currentFrame, uint32_t * imageIndex)
+{
+	vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
+
+	VkResult result = vkAcquireNextImageKHR(device, swapChain, std::numeric_limits<uint64_t>::max(),
+											imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, imageIndex);
+
+	return result;
+}
+
+VkResult sandbox::SwapChain::SubmitCommandBuffers(VkDevice device, uint32_t currentFrame,
+												  const VkCommandBuffer * buffers, uint32_t * imageIndex)
+{
+	if (imagesInFlight[*imageIndex] != VK_NULL_HANDLE)
+	{
+		vkWaitForFences(device, 1, &imagesInFlight[*imageIndex], VK_TRUE, UINT64_MAX);
+	}
+	imagesInFlight[*imageIndex] = inFlightFences[currentFrame];
+
+	VkSubmitInfo submitInfo = { };
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+	VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
+	VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = waitSemaphores;
+	submitInfo.pWaitDstStageMask = waitStages;
+
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = buffers;
+
+	VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores = signalSemaphores;
+
+	vkResetFences(device, 1, &inFlightFences[currentFrame]);
+	if (vkQueueSubmit(device.graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to submit draw command buffer");
+	}
+
+	VkPresentInfoKHR presentInfo = { };
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = signalSemaphores;
+
+	VkSwapchainKHR swapChains[] = {swapChain};
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = swapChains;
+
+	presentInfo.pImageIndices = imageIndex;
+
+	VkResult result = vkQueuePresentKHR(device.presentQueue, &presentInfo);
+
+	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+
+	return result;
+}
+
+void sandbox::SwapChain::Create(const SwapChainSupport & supportDetails, const QueueFamilyIndices & queueFamilyIndices,
 								VkDevice device, VkSurfaceKHR surface)
 {
 	VkSwapchainCreateInfoKHR createInfo = { };
@@ -170,7 +229,7 @@ void sandbox::SwapChain::CreateDepthResources(const SwapChainSupport & supportDe
 	depthImageMemories.resize(images.size());
 	depthImageViews.resize(images.size());
 
-	for (int i = 0; i < depthImages.size(); i++)
+	for (uint32_t i = 0; i < depthImages.size(); i++)
 	{
 		VkImageCreateInfo depthImageInfo = { };
 		depthImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;

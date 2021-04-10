@@ -25,7 +25,8 @@ int main(int argc, char * argv[])
 	{
 		LOG(INFO) << "Application update!";
 		Engine::Update();
+		renderer.DrawFrame();
 	}
-
+	renderer.WaitIdle();
 	Engine::TearDown();
 }

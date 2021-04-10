@@ -15,6 +15,8 @@ namespace sandbox
 
 		void Create(VkDevice device, const PipelineConfigurationInfo & configurationInfo);
 
+		void Bind(VkCommandBuffer commandBuffer) const;
+
 		void Destroy(VkDevice device);
 
 	private:

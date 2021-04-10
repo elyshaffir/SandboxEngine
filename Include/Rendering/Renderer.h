@@ -7,6 +7,8 @@
 #include <Rendering/Device/Device.h>
 #include <Rendering/GraphicsPipeline/GraphicsPipeline.h>
 
+#include <vector>
+
 namespace sandbox
 {
 	class Renderer
@@ -19,13 +21,26 @@ namespace sandbox
 
 		bool ShouldClose();
 
+		void DrawFrame();
+
+		void WaitIdle() const;
+
 	private:
 		Instance instance;
 		Window window;
 		Surface surface;
 		Device device;
 		GraphicsPipeline pipeline;
+
+		VkPipelineLayout pipelineLayout;
+		std::vector<VkCommandBuffer> commandBuffers;
 		uint32_t currentFrame;
+
+		void CreatePipelineLayout();
+
+		void CreatePipeline();
+
+		void CreateCommandBuffers();
 	};
 }
 

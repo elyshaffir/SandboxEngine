@@ -19,6 +19,11 @@ namespace sandbox
 		SwapChain(const SwapChainSupport & supportDetails, const QueueFamilyIndices & queueFamilyIndices,
 				  VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface);
 
+		VkResult AcquireNextImage(VkDevice device, uint32_t currentFrame, uint32_t * imageIndex);
+
+		VkResult SubmitCommandBuffers(VkDevice device, uint32_t currentFrame, const VkCommandBuffer * buffers,
+									  uint32_t * imageIndex);
+
 	private:
 		static constexpr size_t MAX_FRAMES_IN_FLIGHT = 2;
 

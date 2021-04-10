@@ -35,6 +35,11 @@ void sandbox::GraphicsPipeline::Create(VkDevice device, const PipelineConfigurat
 	}
 }
 
+void sandbox::GraphicsPipeline::Bind(VkCommandBuffer commandBuffer) const
+{
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+}
+
 void sandbox::GraphicsPipeline::Destroy(VkDevice device)
 {
 	shaderModules.Destroy(device);
