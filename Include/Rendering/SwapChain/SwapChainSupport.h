@@ -36,6 +36,8 @@ namespace sandbox
 
 		void PopulateFramebufferCreateInfo(VkFramebufferCreateInfo * framebufferCreateInfo) const;
 
+		void ResizeCommandBuffersVector(std::vector<VkCommandBuffer> & commandBuffers) const;
+
 	private:
 		VkSurfaceCapabilitiesKHR capabilities;
 		std::vector<VkSurfaceFormatKHR> formats;

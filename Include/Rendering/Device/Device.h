@@ -28,6 +28,7 @@ namespace sandbox
 		VkQueue graphicsQueue;
 		VkQueue presentQueue;
 		VkCommandPool commandPool;
+		std::vector<VkCommandBuffer> commandBuffers;
 		QueueFamilyIndices queueFamilyIndices;
 		SwapChainSupport swapChainSupport;
 		SwapChain swapChain;
@@ -39,6 +40,8 @@ namespace sandbox
 		void CreateCommandPool();
 
 		void CreateSwapChain(VkSurfaceKHR surface);
+
+		void CreateCommandBuffers();
 	};
 }
 

@@ -31,15 +31,9 @@ namespace sandbox
 		Surface surface;
 		Device device;
 		GraphicsPipeline pipeline;
-
-		std::vector<VkCommandBuffer> commandBuffers;
 		uint32_t currentFrame;
 
-		void CreatePipelineLayout();
-
 		void CreatePipeline();
-
-		void CreateCommandBuffers();
 	};
 }
 

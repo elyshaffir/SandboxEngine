@@ -17,6 +17,59 @@ sandbox::SwapChainSupport::SwapChainSupport(VkPhysicalDevice physicalDevice, VkS
 	FindDepthFormat(physicalDevice);
 }
 
+bool sandbox::SwapChainSupport::IsComplete() const
+{
+	return !formats.empty() && !presentModes.empty();
+}
+
+void sandbox::SwapChainSupport::PopulateSwapChainCreateInfo(VkSwapchainCreateInfoKHR * swapChainCreateInfo) const
+{
+	swapChainCreateInfo->minImageCount = imageCount;
+	swapChainCreateInfo->imageFormat = chosenSurfaceFormat.format;
+	swapChainCreateInfo->imageColorSpace = chosenSurfaceFormat.colorSpace;
+	swapChainCreateInfo->imageExtent = chosenExtent;
+	swapChainCreateInfo->preTransform = capabilities.currentTransform;
+	swapChainCreateInfo->presentMode = chosenPresentMode;
+}
+
+void sandbox::SwapChainSupport::PopulateDepthAttachment(VkAttachmentDescription * depthAttachment) const
+{
+	depthAttachment->format = depthFormat;
+}
+
+void sandbox::SwapChainSupport::PopulateImageViewCreateInfo(VkImageViewCreateInfo * imageViewCreateInfo) const
+{
+	imageViewCreateInfo->format = chosenSurfaceFormat.format;
+}
+
+void sandbox::SwapChainSupport::PopulateColorAttachment(VkAttachmentDescription * colorAttachment) const
+{
+	colorAttachment->format = chosenSurfaceFormat.format;
+}
+
+void sandbox::SwapChainSupport::PopulateDepthImageCreateInfo(VkImageCreateInfo * depthImageCreateInfo) const
+{
+	depthImageCreateInfo->extent.width = chosenExtent.width;
+	depthImageCreateInfo->extent.height = chosenExtent.height;
+	depthImageCreateInfo->format = depthFormat;
+}
+
+void sandbox::SwapChainSupport::PopulateDepthImageViewCreateInfo(VkImageViewCreateInfo * depthImageViewCreateInfo) const
+{
+	depthImageViewCreateInfo->format = depthFormat;
+}
+
+void sandbox::SwapChainSupport::PopulateFramebufferCreateInfo(VkFramebufferCreateInfo * framebufferCreateInfo) const
+{
+	framebufferCreateInfo->width = chosenExtent.width;
+	framebufferCreateInfo->height = chosenExtent.height;
+}
+
+void sandbox::SwapChainSupport::ResizeCommandBuffersVector(std::vector<VkCommandBuffer> & commandBuffers) const
+{
+	commandBuffers.resize(imageCount);
+}
+
 void sandbox::SwapChainSupport::Create(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface)
 {
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &capabilities);
@@ -38,21 +91,6 @@ void sandbox::SwapChainSupport::Create(VkPhysicalDevice physicalDevice, VkSurfac
 		presentModes.resize(presentModeCount);
 		vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, presentModes.data());
 	}
-}
-
-bool sandbox::SwapChainSupport::IsComplete() const
-{
-	return !formats.empty() && !presentModes.empty();
-}
-
-void sandbox::SwapChainSupport::PopulateSwapChainCreateInfo(VkSwapchainCreateInfoKHR * swapChainCreateInfo) const
-{
-	swapChainCreateInfo->minImageCount = imageCount;
-	swapChainCreateInfo->imageFormat = chosenSurfaceFormat.format;
-	swapChainCreateInfo->imageColorSpace = chosenSurfaceFormat.colorSpace;
-	swapChainCreateInfo->imageExtent = chosenExtent;
-	swapChainCreateInfo->preTransform = capabilities.currentTransform;
-	swapChainCreateInfo->presentMode = chosenPresentMode;
 }
 
 void sandbox::SwapChainSupport::ChooseSurfaceFormat()
@@ -137,37 +175,4 @@ void sandbox::SwapChainSupport::FindDepthFormat(VkPhysicalDevice physicalDevice)
 		}
 	}
 	throw std::runtime_error("Failed to find supported format");
-}
-
-void sandbox::SwapChainSupport::PopulateDepthAttachment(VkAttachmentDescription * depthAttachment) const
-{
-	depthAttachment->format = depthFormat;
-}
-
-void sandbox::SwapChainSupport::PopulateImageViewCreateInfo(VkImageViewCreateInfo * imageViewCreateInfo) const
-{
-	imageViewCreateInfo->format = chosenSurfaceFormat.format;
-}
-
-void sandbox::SwapChainSupport::PopulateColorAttachment(VkAttachmentDescription * colorAttachment) const
-{
-	colorAttachment->format = chosenSurfaceFormat.format;
-}
-
-void sandbox::SwapChainSupport::PopulateDepthImageCreateInfo(VkImageCreateInfo * depthImageCreateInfo) const
-{
-	depthImageCreateInfo->extent.width = chosenExtent.width;
-	depthImageCreateInfo->extent.height = chosenExtent.height;
-	depthImageCreateInfo->format = depthFormat;
-}
-
-void sandbox::SwapChainSupport::PopulateDepthImageViewCreateInfo(VkImageViewCreateInfo * depthImageViewCreateInfo) const
-{
-	depthImageViewCreateInfo->format = depthFormat;
-}
-
-void sandbox::SwapChainSupport::PopulateFramebufferCreateInfo(VkFramebufferCreateInfo * framebufferCreateInfo) const
-{
-	framebufferCreateInfo->width = chosenExtent.width;
-	framebufferCreateInfo->height = chosenExtent.height;
 }
