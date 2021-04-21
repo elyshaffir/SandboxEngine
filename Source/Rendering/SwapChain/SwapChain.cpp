@@ -58,9 +58,37 @@ sandbox::SwapChain::SwapChain(const SwapChainSupport & supportDetails, const Que
 	CreateSyncObjects(device);
 }
 
-void sandbox::SwapChain::Destroy(VkDevice device) const
+void sandbox::SwapChain::Destroy(VkDevice device)
 {
+	for (VkImageView imageView : imageViews)
+	{
+		vkDestroyImageView(device, imageView, nullptr);
+	}
+
+	imageViews.clear();
+
 	vkDestroySwapchainKHR(device, swapChain, nullptr);
+
+	for (int i = 0; i < depthImages.size(); i++)
+	{
+		vkDestroyImageView(device, depthImageViews[i], nullptr);
+		vkDestroyImage(device, depthImages[i], nullptr);
+		vkFreeMemory(device, depthImageMemories[i], nullptr);
+	}
+
+	for (VkFramebuffer framebuffer : framebuffers)
+	{
+		vkDestroyFramebuffer(device, framebuffer, nullptr);
+	}
+
+	vkDestroyRenderPass(device, renderPass, nullptr);
+
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+	{
+		vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
+		vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
+		vkDestroyFence(device, inFlightFences[i], nullptr);
+	}
 }
 
 VkResult sandbox::SwapChain::AcquireNextImage(VkDevice device, uint32_t * imageIndex)
@@ -73,10 +101,8 @@ VkResult sandbox::SwapChain::AcquireNextImage(VkDevice device, uint32_t * imageI
 	return result;
 }
 
-VkResult
-sandbox::SwapChain::SubmitCommandBuffers(VkDevice device, const VkCommandBuffer * buffers, uint32_t * imageIndex,
-										 VkQueue graphicsQueue,
-										 VkQueue presentQueue)
+VkResult sandbox::SwapChain::SubmitCommandBuffers(VkDevice device, const VkCommandBuffer * buffers,
+												  uint32_t * imageIndex, VkQueue graphicsQueue, VkQueue presentQueue)
 {
 	if (imagesInFlight[*imageIndex] != VK_NULL_HANDLE)
 	{

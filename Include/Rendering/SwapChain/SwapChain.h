@@ -21,7 +21,7 @@ namespace sandbox
 		SwapChain(const SwapChainSupport & supportDetails, const QueueFamilyIndices & queueFamilyIndices,
 				  VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface);
 
-		void Destroy(VkDevice device) const;
+		void Destroy(VkDevice device);
 
 		VkResult AcquireNextImage(VkDevice device, uint32_t * imageIndex);
 

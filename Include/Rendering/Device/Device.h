@@ -23,7 +23,7 @@ namespace sandbox
 
 		Device(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent);
 
-		void Destroy() const;
+		void Destroy();
 
 		void CreateCommandBuffers(VkPipeline pipeline);
 
