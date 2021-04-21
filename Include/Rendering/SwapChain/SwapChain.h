@@ -14,21 +14,25 @@ namespace sandbox
 	class SwapChain
 	{
 	public:
+		VkRenderPass renderPass;
+
 		SwapChain() = default;
 
 		SwapChain(const SwapChainSupport & supportDetails, const QueueFamilyIndices & queueFamilyIndices,
 				  VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface);
 
-		VkResult AcquireNextImage(VkDevice device, uint32_t currentFrame, uint32_t * imageIndex);
+		VkResult AcquireNextImage(VkDevice device, uint32_t * imageIndex);
 
-		VkResult SubmitCommandBuffers(VkDevice device, uint32_t currentFrame, const VkCommandBuffer * buffers,
-									  uint32_t * imageIndex);
+		VkResult SubmitCommandBuffers(VkDevice device, const VkCommandBuffer * buffers, uint32_t * imageIndex,
+									  VkQueue graphicsQueue,
+									  VkQueue presentQueue);
+
+		VkFramebuffer GetFrameBuffer(uint32_t framebufferIndex);
 
 	private:
 		static constexpr size_t MAX_FRAMES_IN_FLIGHT = 2;
-
 		VkSwapchainKHR swapChain;
-		VkRenderPass renderPass;
+		size_t frameIndex;
 		std::vector<VkFramebuffer> framebuffers;
 		std::vector<VkImage> depthImages;
 		std::vector<VkDeviceMemory> depthImageMemories;

@@ -9,14 +9,13 @@ sandbox::Renderer::Renderer(uint16_t windowWidth, uint16_t windowHeight, std::st
 		: window(windowWidth, windowHeight, std::move(windowTitle)), instance(),
 		  surface(instance.instance, window.window),
 		  device(instance.instance, surface.surface, window.GenerateExtent()),
-		  pipeline(device.device, shaderPaths, pipelineConfigurationInfo), currentFrame()
+		  pipeline(device.device, shaderPaths, pipelineConfigurationInfo, device.swapChain.renderPass), currentFrame()
 {
-	CreatePipeline();
+	device.CreateCommandBuffers(pipeline.pipeline);
 }
 
 sandbox::Renderer::~Renderer()
 {
-	vkDestroyPipelineLayout(device.device, pipelineLayout, nullptr);
 	surface.Destroy(instance.instance);
 	pipeline.Destroy(device.device);
 }
@@ -30,15 +29,15 @@ void sandbox::Renderer::DrawFrame()
 {
 	currentFrame++;
 	uint32_t imageIndex = 0;
-	VkResult result = device.swapChain.AcquireNextImage(device.device, currentFrame, &imageIndex);
+	VkResult result = device.swapChain.AcquireNextImage(device.device, &imageIndex);
 
 	if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
 	{
 		throw std::runtime_error("Failed to acquire swap chain image");
 	}
 
-	result = device.swapChain.SubmitCommandBuffers(device.device, currentFrame, &commandBuffers[imageIndex],
-												   &imageIndex);
+	result = device.swapChain.SubmitCommandBuffers(device.device, &device.commandBuffers[imageIndex],
+												   &imageIndex, device.graphicsQueue, device.presentQueue);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to present swap chain image");
@@ -48,12 +47,4 @@ void sandbox::Renderer::DrawFrame()
 void sandbox::Renderer::WaitIdle() const
 {
 	vkDeviceWaitIdle(device.device);
-}
-
-void sandbox::Renderer::CreatePipeline()
-{
-	PipelineConfigurationInfo pipelineConfigurationInfo = PipelineConfigurationInfo(swapchain_extent);
-	pipelineConfigurationInfo.renderPass = swapchain_render_pass;
-	pipelineConfigurationInfo.pipelineLayout = pipelineLayout;
-	pipeline = GraphicsPipeline(device.device, shader_paths, pipelineConfigurationInfo);
 }

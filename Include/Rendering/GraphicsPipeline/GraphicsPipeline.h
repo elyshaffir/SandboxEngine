@@ -10,19 +10,18 @@ namespace sandbox
 	class GraphicsPipeline
 	{
 	public:
-		GraphicsPipeline(VkDevice device, const GraphicsShaderPaths & shaderPaths,
-						 const PipelineConfigurationInfo & configurationInfo);
+		VkPipeline pipeline;
 
-		void Bind(VkCommandBuffer commandBuffer) const;
+		GraphicsPipeline(VkDevice device, const GraphicsShaderPaths & shaderPaths,
+						 const PipelineConfigurationInfo & configurationInfo, VkRenderPass renderPass);
 
 		void Destroy(VkDevice device);
 
 	private:
-		VkPipeline pipeline;
 		GraphicsShaderModules shaderModules;
-		VkPipelineLayout pipelineLayout;
+		VkPipelineLayout layout;
 
-		void Create(VkDevice device, const PipelineConfigurationInfo & configurationInfo);
+		void Create(VkDevice device, const PipelineConfigurationInfo & configurationInfo, VkRenderPass renderPass);
 
 		void CreateLayout(VkDevice device);
 	};

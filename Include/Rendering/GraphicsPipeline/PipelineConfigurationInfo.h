@@ -8,7 +8,7 @@ namespace sandbox
 	class PipelineConfigurationInfo
 	{
 	public:
-		explicit PipelineConfigurationInfo(VkExtent2D windowExtent);
+		explicit PipelineConfigurationInfo(VkExtent2D swapChainExtent);
 
 		void Create(VkExtent2D windowExtent);
 
@@ -26,7 +26,6 @@ namespace sandbox
 		VkPipelineColorBlendStateCreateInfo colorBlendCreateInfo;
 		VkPipelineDepthStencilStateCreateInfo depthStencilCreateInfo;
 		VkPipelineLayout pipelineLayout;
-		VkRenderPass renderPass;
 		uint32_t subpass;
 	};
 }

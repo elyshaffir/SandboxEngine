@@ -3,25 +3,23 @@
 #include <stdexcept>
 
 sandbox::GraphicsPipeline::GraphicsPipeline(VkDevice device, const sandbox::GraphicsShaderPaths & shaderPaths,
-											const sandbox::PipelineConfigurationInfo & configurationInfo) :
+											const sandbox::PipelineConfigurationInfo & configurationInfo,
+											VkRenderPass renderPass) :
 		pipeline(VK_NULL_HANDLE), shaderModules(device, shaderPaths)
 {
-	Create(device, configurationInfo);
-	CreateLayout(device);
-}
-
-void sandbox::GraphicsPipeline::Bind(VkCommandBuffer commandBuffer) const
-{
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+	CreateLayout(device); // ALERT Possibly moved
+	Create(device, configurationInfo, renderPass);
 }
 
 void sandbox::GraphicsPipeline::Destroy(VkDevice device)
 {
+	vkDestroyPipelineLayout(device, layout, nullptr);
 	shaderModules.Destroy(device);
 	vkDestroyPipeline(device, pipeline, nullptr);
 }
 
-void sandbox::GraphicsPipeline::Create(VkDevice device, const PipelineConfigurationInfo & configurationInfo)
+void sandbox::GraphicsPipeline::Create(VkDevice device, const PipelineConfigurationInfo & configurationInfo,
+									   VkRenderPass renderPass)
 {
 	VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo = { };
 	vertexInputCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -39,7 +37,9 @@ void sandbox::GraphicsPipeline::Create(VkDevice device, const PipelineConfigurat
 	createInfo.pVertexInputState = &vertexInputCreateInfo;
 	createInfo.pViewportState = &viewportCreateInfo;
 	configurationInfo.PopulateGraphicsPipelineCreateInfo(&createInfo);
+	createInfo.renderPass = renderPass;
 	createInfo.basePipelineIndex = -1;
+	createInfo.layout = layout; // ALERT: Added to solve error
 
 	if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &createInfo, nullptr, &pipeline) != VK_SUCCESS)
 	{
@@ -51,7 +51,7 @@ void sandbox::GraphicsPipeline::CreateLayout(VkDevice device)
 {
 	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = { };
 	pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	if (vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+	if (vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, nullptr, &layout) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create pipeline layout");
 	}

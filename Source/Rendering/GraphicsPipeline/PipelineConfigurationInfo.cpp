@@ -1,11 +1,11 @@
 #include <Rendering/GraphicsPipeline/PipelineConfigurationInfo.h>
 
-sandbox::PipelineConfigurationInfo::PipelineConfigurationInfo(VkExtent2D windowExtent)
+sandbox::PipelineConfigurationInfo::PipelineConfigurationInfo(VkExtent2D swapChainExtent)
 		: viewport({ }), scissor({ }), inputAssemblyCreateInfo({ }), rasterizationCreateInfo({ }),
 		  multisampleCreateInfo({ }), colorBlendAttachment({ }), colorBlendCreateInfo({ }), depthStencilCreateInfo({ }),
-		  pipelineLayout(VK_NULL_HANDLE), renderPass(VK_NULL_HANDLE), subpass(0)
+		  pipelineLayout(VK_NULL_HANDLE), subpass(0)
 {
-	Create(windowExtent);
+	Create(swapChainExtent);
 }
 
 void sandbox::PipelineConfigurationInfo::Create(VkExtent2D windowExtent)
@@ -69,6 +69,5 @@ void sandbox::PipelineConfigurationInfo::PopulateGraphicsPipelineCreateInfo(
 	graphicsPipelineCreateInfo->pColorBlendState = &colorBlendCreateInfo;
 	graphicsPipelineCreateInfo->pDepthStencilState = &depthStencilCreateInfo;
 	graphicsPipelineCreateInfo->layout = pipelineLayout;
-	graphicsPipelineCreateInfo->renderPass = renderPass;
 	graphicsPipelineCreateInfo->subpass = subpass;
 }

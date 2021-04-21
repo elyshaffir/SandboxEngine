@@ -38,6 +38,8 @@ namespace sandbox
 
 		void ResizeCommandBuffersVector(std::vector<VkCommandBuffer> & commandBuffers) const;
 
+		void PopulateRenderPassBeginInfo(VkRenderPassBeginInfo * renderPassBeginInfo) const;
+
 	private:
 		VkSurfaceCapabilitiesKHR capabilities;
 		std::vector<VkSurfaceFormatKHR> formats;

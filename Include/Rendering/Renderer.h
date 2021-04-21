@@ -32,8 +32,6 @@ namespace sandbox
 		Device device;
 		GraphicsPipeline pipeline;
 		uint32_t currentFrame;
-
-		void CreatePipeline();
 	};
 }
 

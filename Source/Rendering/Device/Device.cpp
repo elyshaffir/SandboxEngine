@@ -58,13 +58,59 @@ sandbox::Device::Device(VkInstance instance, VkSurfaceKHR surface, VkExtent2D wi
 	CreateLogicalDevice();
 	CreateCommandPool();
 	CreateSwapChain(surface);
-	CreateCommandBuffers();
 }
 
 sandbox::Device::~Device()
 {
 	vkDestroyCommandPool(device, commandPool, nullptr);
 	vkDestroyDevice(device, nullptr);
+}
+
+void sandbox::Device::CreateCommandBuffers(VkPipeline pipeline)
+{
+	swapChainSupport.ResizeCommandBuffersVector(commandBuffers);
+	VkCommandBufferAllocateInfo allocateInfo = { };
+	allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocateInfo.commandPool = commandPool;
+	allocateInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
+
+	if (vkAllocateCommandBuffers(device, &allocateInfo, commandBuffers.data()) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to allocate command buffers");
+	}
+
+	for (uint32_t i = 0; i < commandBuffers.size(); i++)
+	{
+		VkCommandBufferBeginInfo beginInfo = { };
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+		if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to begin recording command buffer");
+		}
+
+		VkRenderPassBeginInfo renderPassBeginInfo = { };
+		renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassBeginInfo.renderPass = swapChain.renderPass;
+		renderPassBeginInfo.framebuffer = swapChain.GetFrameBuffer(i);
+		swapChainSupport.PopulateRenderPassBeginInfo(&renderPassBeginInfo);
+
+		std::array<VkClearValue, 2> clearValues = { };
+		clearValues[0].color = {0.93f, 0.69f, 0.86f, 1.0f};
+		clearValues[1].depthStencil = {1.0f, 0};
+		renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+		renderPassBeginInfo.pClearValues = clearValues.data();
+
+		vkCmdBeginRenderPass(commandBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+		vkCmdDraw(commandBuffers[i], 3, 1, 0, 0); // ALERT: Used to be commandBuffers[0]
+		vkCmdEndRenderPass(commandBuffers[i]); // ALERT: Used to be commandBuffers[0]
+		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to record command buffer");
+		}
+	}
 }
 
 void sandbox::Device::PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent)
@@ -106,7 +152,8 @@ void sandbox::Device::PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surfa
 void sandbox::Device::CreateLogicalDevice()
 {
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-	queueFamilyIndices.FillQueueCreateInfos(queueCreateInfos);
+	float queuePriority = 1.0f;  // ALERT: For testing only!
+	queueFamilyIndices.FillQueueCreateInfos(queueCreateInfos, &queuePriority);
 
 	VkPhysicalDeviceFeatures requiredDeviceFeatures = GenerateRequiredDeviceFeatures();
 
@@ -147,51 +194,4 @@ void sandbox::Device::CreateCommandPool()
 void sandbox::Device::CreateSwapChain(VkSurfaceKHR surface)
 {
 	swapChain = SwapChain(swapChainSupport, queueFamilyIndices, physicalDevice, device, surface);
-}
-
-void sandbox::Device::CreateCommandBuffers()
-{
-	swapChainSupport.ResizeCommandBuffersVector(commandBuffers);
-	VkCommandBufferAllocateInfo allocateInfo = { };
-	allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocateInfo.commandPool = commandPool;
-	allocateInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
-
-	if (vkAllocateCommandBuffers(device, &allocateInfo, commandBuffers.data()) != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to allocate command buffers");
-	}
-
-	for (uint32_t i = 0; i < commandBuffers.size(); i++)
-	{
-		VkCommandBufferBeginInfo beginInfo = { };
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-		if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS)
-		{
-			throw std::runtime_error("Failed to begin recording command buffer");
-		}
-
-		VkRenderPassBeginInfo renderPassBeginInfo = { };
-		renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassBeginInfo.renderPass = swapchain_render_pass;
-		renderPassBeginInfo.framebuffer = swapchain.getFrameBuffer(i);
-		renderPassBeginInfo.renderArea.extent = swapchain_extent;
-
-		std::array<VkClearValue, 2> clearValues = { };
-		clearValues[0].color = {0.93f, 0.69f, 0.86f, 1.0f};
-		clearValues[1].depthStencil = {1.0f, 0};
-		renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-		renderPassBeginInfo.pClearValues = clearValues.data();
-
-		vkCmdBeginRenderPass(commandBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-		pipeline.Bind(commandBuffers[i]);
-		vkCmdDraw(commandBuffers[0], 3, 1, 0, 0);
-		vkCmdEndRenderPass(commandBuffers[0]);
-		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS)
-		{
-			throw std::runtime_error("Failed to record command buffer");
-		}
-	}
 }

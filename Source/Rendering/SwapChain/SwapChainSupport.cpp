@@ -70,6 +70,11 @@ void sandbox::SwapChainSupport::ResizeCommandBuffersVector(std::vector<VkCommand
 	commandBuffers.resize(imageCount);
 }
 
+void sandbox::SwapChainSupport::PopulateRenderPassBeginInfo(VkRenderPassBeginInfo * renderPassBeginInfo) const
+{
+	renderPassBeginInfo->renderArea.extent = chosenExtent;
+}
+
 void sandbox::SwapChainSupport::Create(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface)
 {
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &capabilities);

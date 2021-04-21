@@ -19,7 +19,7 @@ namespace sandbox
 
 		void PopulateSwapChainCreateInfo(VkSwapchainCreateInfoKHR * swapChainCreateInfo) const;
 
-		void FillQueueCreateInfos(std::vector<VkDeviceQueueCreateInfo> & queueCreateInfos) const;
+		void FillQueueCreateInfos(std::vector<VkDeviceQueueCreateInfo> & queueCreateInfos, float * queuePriority) const;
 
 		void GetDeviceQueues(VkDevice device, VkQueue * graphicsQueue, VkQueue * presentQueue) const;
 

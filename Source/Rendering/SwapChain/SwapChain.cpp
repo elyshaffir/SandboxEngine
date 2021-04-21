@@ -48,7 +48,7 @@ static void CreateImageWithInfo(VkDevice device, VkPhysicalDevice physicalDevice
 
 sandbox::SwapChain::SwapChain(const SwapChainSupport & supportDetails, const QueueFamilyIndices & queueFamilyIndices,
 							  VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface)
-		: swapChain(), renderPass()
+		: swapChain(), frameIndex(), renderPass()
 {
 	Create(supportDetails, queueFamilyIndices, device, surface);
 	CreateImageViews(supportDetails, device);
@@ -58,29 +58,31 @@ sandbox::SwapChain::SwapChain(const SwapChainSupport & supportDetails, const Que
 	CreateSyncObjects(device);
 }
 
-VkResult sandbox::SwapChain::AcquireNextImage(VkDevice device, uint32_t currentFrame, uint32_t * imageIndex)
+VkResult sandbox::SwapChain::AcquireNextImage(VkDevice device, uint32_t * imageIndex)
 {
-	vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
+	vkWaitForFences(device, 1, &inFlightFences[frameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max());
 
 	VkResult result = vkAcquireNextImageKHR(device, swapChain, std::numeric_limits<uint64_t>::max(),
-											imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, imageIndex);
+											imageAvailableSemaphores[frameIndex], VK_NULL_HANDLE, imageIndex);
 
 	return result;
 }
 
-VkResult sandbox::SwapChain::SubmitCommandBuffers(VkDevice device, uint32_t currentFrame,
-												  const VkCommandBuffer * buffers, uint32_t * imageIndex)
+VkResult
+sandbox::SwapChain::SubmitCommandBuffers(VkDevice device, const VkCommandBuffer * buffers, uint32_t * imageIndex,
+										 VkQueue graphicsQueue,
+										 VkQueue presentQueue)
 {
 	if (imagesInFlight[*imageIndex] != VK_NULL_HANDLE)
 	{
 		vkWaitForFences(device, 1, &imagesInFlight[*imageIndex], VK_TRUE, UINT64_MAX);
 	}
-	imagesInFlight[*imageIndex] = inFlightFences[currentFrame];
+	imagesInFlight[*imageIndex] = inFlightFences[frameIndex];
 
 	VkSubmitInfo submitInfo = { };
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-	VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
+	VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[frameIndex]};
 	VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = waitSemaphores;
@@ -89,12 +91,12 @@ VkResult sandbox::SwapChain::SubmitCommandBuffers(VkDevice device, uint32_t curr
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = buffers;
 
-	VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
+	VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[frameIndex]};
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
-	vkResetFences(device, 1, &inFlightFences[currentFrame]);
-	if (vkQueueSubmit(device.graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS)
+	vkResetFences(device, 1, &inFlightFences[frameIndex]);
+	if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[frameIndex]) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to submit draw command buffer");
 	}
@@ -111,11 +113,16 @@ VkResult sandbox::SwapChain::SubmitCommandBuffers(VkDevice device, uint32_t curr
 
 	presentInfo.pImageIndices = imageIndex;
 
-	VkResult result = vkQueuePresentKHR(device.presentQueue, &presentInfo);
+	VkResult result = vkQueuePresentKHR(presentQueue, &presentInfo);
 
-	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+	frameIndex = (frameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
 
 	return result;
+}
+
+VkFramebuffer sandbox::SwapChain::GetFrameBuffer(uint32_t framebufferIndex)
+{
+	return framebuffers[framebufferIndex];
 }
 
 void sandbox::SwapChain::Create(const SwapChainSupport & supportDetails, const QueueFamilyIndices & queueFamilyIndices,
