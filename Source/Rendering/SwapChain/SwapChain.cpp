@@ -58,6 +58,11 @@ sandbox::SwapChain::SwapChain(const SwapChainSupport & supportDetails, const Que
 	CreateSyncObjects(device);
 }
 
+void sandbox::SwapChain::Destroy(VkDevice device) const
+{
+	vkDestroySwapchainKHR(device, swapChain, nullptr);
+}
+
 VkResult sandbox::SwapChain::AcquireNextImage(VkDevice device, uint32_t * imageIndex)
 {
 	vkWaitForFences(device, 1, &inFlightFences[frameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max());

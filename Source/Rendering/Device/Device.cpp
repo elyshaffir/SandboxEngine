@@ -60,8 +60,9 @@ sandbox::Device::Device(VkInstance instance, VkSurfaceKHR surface, VkExtent2D wi
 	CreateSwapChain(surface);
 }
 
-sandbox::Device::~Device()
+void sandbox::Device::Destroy() const
 {
+	swapChain.Destroy(device);
 	vkDestroyCommandPool(device, commandPool, nullptr);
 	vkDestroyDevice(device, nullptr);
 }

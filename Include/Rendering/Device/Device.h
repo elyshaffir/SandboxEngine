@@ -22,8 +22,11 @@ namespace sandbox
 		static constexpr std::array<const char *, 1> DEVICE_EXTENSIONS = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 		Device(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent);
-		~Device();
+
+		void Destroy() const;
+
 		void CreateCommandBuffers(VkPipeline pipeline);
+
 	private:
 		VkPhysicalDevice physicalDevice;
 		VkPhysicalDeviceProperties physicalDeviceProperties;
