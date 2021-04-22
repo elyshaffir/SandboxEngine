@@ -16,9 +16,9 @@ sandbox::Renderer::Renderer(uint16_t windowWidth, uint16_t windowHeight, std::st
 
 sandbox::Renderer::~Renderer()
 {
+	pipeline.Destroy(device.device);
 	device.Destroy();
 	surface.Destroy(instance.instance);
-	pipeline.Destroy(device.device);
 }
 
 bool sandbox::Renderer::ShouldClose()
