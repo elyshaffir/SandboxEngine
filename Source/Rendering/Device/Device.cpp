@@ -75,7 +75,7 @@ void sandbox::Device::CreateCommandBuffers(VkPipeline pipeline)
 		throw std::runtime_error("Failed to allocate command buffers");
 	}
 
-	for (uint32_t i = 0; i < commandBuffers.size(); i++)
+	for (size_t i = 0; i < commandBuffers.size(); i++)
 	{
 		VkCommandBufferBeginInfo beginInfo = { };
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;

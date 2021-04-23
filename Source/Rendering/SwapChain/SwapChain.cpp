@@ -69,7 +69,7 @@ void sandbox::SwapChain::Destroy(VkDevice device)
 
 	vkDestroySwapchainKHR(device, swapChain, nullptr);
 
-	for (int i = 0; i < depthImages.size(); i++)
+	for (size_t i = 0; i < depthImages.size(); i++)
 	{
 		vkDestroyImageView(device, depthImageViews[i], nullptr);
 		vkDestroyImage(device, depthImages[i], nullptr);
@@ -267,7 +267,7 @@ void sandbox::SwapChain::CreateDepthResources(const SwapChainSupport & supportDe
 	depthImageMemories.resize(images.size());
 	depthImageViews.resize(images.size());
 
-	for (uint32_t i = 0; i < depthImages.size(); i++)
+	for (size_t i = 0; i < depthImages.size(); i++)
 	{
 		VkImageCreateInfo depthImageInfo = { };
 		depthImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
