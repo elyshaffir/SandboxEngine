@@ -1,11 +1,5 @@
 #include <Rendering/Device/Device.h>
 
-#ifdef ENABLE_VALIDATION_LAYERS
-
-#include <Rendering/Instance/Instance.h>
-
-#endif
-
 #include <set>
 
 #include <glog/logging.h>
@@ -165,11 +159,6 @@ void sandbox::Device::CreateLogicalDevice()
 	createInfo.pEnabledFeatures = &requiredDeviceFeatures;
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(DEVICE_EXTENSIONS.size());
 	createInfo.ppEnabledExtensionNames = DEVICE_EXTENSIONS.data();
-
-#ifdef ENABLE_VALIDATION_LAYERS
-	createInfo.enabledLayerCount = static_cast<uint32_t>(Instance::VALIDATION_LAYERS.size());
-	createInfo.ppEnabledLayerNames = Instance::VALIDATION_LAYERS.data();
-#endif
 
 	if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
 	{
