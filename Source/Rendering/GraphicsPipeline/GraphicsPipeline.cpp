@@ -5,7 +5,7 @@
 sandbox::GraphicsPipeline::GraphicsPipeline(VkDevice device, const sandbox::GraphicsShaderPaths & shaderPaths,
 											const sandbox::PipelineConfigurationInfo & configurationInfo,
 											VkRenderPass renderPass) :
-		pipeline(VK_NULL_HANDLE), shaderModules(device, shaderPaths)
+		pipeline(VK_NULL_HANDLE), shaderModules(device, shaderPaths), layout(VK_NULL_HANDLE)
 {
 	CreateLayout(device); // ALERT Possibly moved
 	Create(device, configurationInfo, renderPass);

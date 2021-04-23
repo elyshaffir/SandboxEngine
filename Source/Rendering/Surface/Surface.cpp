@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-sandbox::Surface::Surface(VkInstance instance, GLFWwindow * window) : surface(0)
+sandbox::Surface::Surface(VkInstance instance, GLFWwindow * window) : surface(VK_NULL_HANDLE)
 {
 	Create(instance, window);
 }
