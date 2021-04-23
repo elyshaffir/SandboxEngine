@@ -137,7 +137,7 @@ void sandbox::SwapChainSupport::ChoosePresentMode()
 
 void sandbox::SwapChainSupport::ChooseExtent(VkExtent2D windowExtent)
 {
-	if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
+	if (capabilities.currentExtent.width != UINT32_MAX)
 	{
 		chosenExtent = capabilities.currentExtent;
 	}

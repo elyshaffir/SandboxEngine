@@ -93,10 +93,10 @@ void sandbox::SwapChain::Destroy(VkDevice device)
 
 VkResult sandbox::SwapChain::AcquireNextImage(VkDevice device, uint32_t * imageIndex)
 {
-	vkWaitForFences(device, 1, &inFlightFences[frameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max());
+	vkWaitForFences(device, 1, &inFlightFences[frameIndex], VK_TRUE, UINT64_MAX);
 
-	VkResult result = vkAcquireNextImageKHR(device, swapChain, std::numeric_limits<uint64_t>::max(),
-											imageAvailableSemaphores[frameIndex], VK_NULL_HANDLE, imageIndex);
+	VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[frameIndex],
+											VK_NULL_HANDLE, imageIndex);
 
 	return result;
 }
