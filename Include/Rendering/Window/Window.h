@@ -9,12 +9,19 @@
 
 namespace sandbox
 {
+	struct WindowConfigurationInfo
+	{
+		uint16_t windowWidth;
+		uint16_t windowHeight;
+		std::string windowTitle;
+	};
+
 	class Window
 	{
 	public:
 		GLFWwindow * window;
 
-		Window(uint32_t width, uint32_t height, std::string title);
+		explicit Window(const WindowConfigurationInfo & configurationInfo);
 
 		~Window();
 

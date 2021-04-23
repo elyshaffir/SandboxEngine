@@ -1,8 +1,8 @@
 #include <Rendering/Window/Window.h>
-#include <stdexcept>
 
-sandbox::Window::Window(uint32_t width, uint32_t height, std::string title) :
-		width(width), height(height), title(std::move(title)), window(nullptr)
+sandbox::Window::Window(const WindowConfigurationInfo & configurationInfo)
+		: width(configurationInfo.windowWidth), height(configurationInfo.windowHeight),
+		  title(configurationInfo.windowTitle), window(nullptr)
 {
 	Create();
 }

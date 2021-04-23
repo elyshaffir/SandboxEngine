@@ -1,26 +1,26 @@
 #include <Rendering/GraphicsPipeline/PipelineConfigurationInfo.h>
 
-sandbox::PipelineConfigurationInfo::PipelineConfigurationInfo(VkExtent2D swapChainExtent)
+sandbox::PipelineConfigurationInfo::PipelineConfigurationInfo(VkExtent2D frameExtent)
 		: viewport({ }), scissor({ }), inputAssemblyCreateInfo({ }), rasterizationCreateInfo({ }),
 		  multisampleCreateInfo({ }), colorBlendAttachment({ }), colorBlendCreateInfo({ }), depthStencilCreateInfo({ }),
 		  pipelineLayout(VK_NULL_HANDLE), subpass(0)
 {
-	Create(swapChainExtent);
+	Create(frameExtent);
 }
 
-void sandbox::PipelineConfigurationInfo::Create(VkExtent2D windowExtent)
+void sandbox::PipelineConfigurationInfo::Create(VkExtent2D frameExtent)
 {
 	inputAssemblyCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	inputAssemblyCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	inputAssemblyCreateInfo.primitiveRestartEnable = VK_FALSE;
 
-	viewport.width = static_cast<float>(windowExtent.width);
-	viewport.height = static_cast<float>(windowExtent.height);
+	viewport.width = static_cast<float>(frameExtent.width);
+	viewport.height = static_cast<float>(frameExtent.height);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
 	scissor.offset = {0, 0};
-	scissor.extent = windowExtent;
+	scissor.extent = frameExtent;
 
 	rasterizationCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	rasterizationCreateInfo.depthClampEnable = VK_FALSE;

@@ -1,12 +1,12 @@
 #include <Rendering/Renderer.h>
 
-#include <utility>
 #include <stdexcept>
 #include <array>
 
-sandbox::Renderer::Renderer(uint16_t windowWidth, uint16_t windowHeight, std::string windowTitle,
-							GraphicsShaderPaths & shaderPaths, PipelineConfigurationInfo & pipelineConfigurationInfo)
-		: window(windowWidth, windowHeight, std::move(windowTitle)), instance(),
+sandbox::Renderer::Renderer(const WindowConfigurationInfo & windowConfigurationInfo,
+							const GraphicsShaderPaths & shaderPaths,
+							const PipelineConfigurationInfo & pipelineConfigurationInfo)
+		: window(windowConfigurationInfo), instance(),
 		  surface(instance.instance, window.window),
 		  device(instance.instance, surface.surface, window.GenerateExtent()),
 		  pipeline(device.device, shaderPaths, pipelineConfigurationInfo, device.swapChain.renderPass), currentFrame()

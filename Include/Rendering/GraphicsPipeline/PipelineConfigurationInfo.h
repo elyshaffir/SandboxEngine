@@ -8,9 +8,9 @@ namespace sandbox
 	class PipelineConfigurationInfo
 	{
 	public:
-		explicit PipelineConfigurationInfo(VkExtent2D swapChainExtent);
+		explicit PipelineConfigurationInfo(VkExtent2D frameExtent);
 
-		void Create(VkExtent2D windowExtent);
+		void Create(VkExtent2D frameExtent);
 
 		void PopulateViewportCreateInfo(VkPipelineViewportStateCreateInfo * viewportCreateInfo) const;
 

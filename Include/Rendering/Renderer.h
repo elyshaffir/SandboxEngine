@@ -14,8 +14,8 @@ namespace sandbox
 	class Renderer
 	{
 	public:
-		Renderer(uint16_t windowWidth, uint16_t windowHeight, std::string windowTitle,
-				 GraphicsShaderPaths & shaderPaths, PipelineConfigurationInfo & pipelineConfigurationInfo);
+		Renderer(const WindowConfigurationInfo & windowConfigurationInfo,
+				 const GraphicsShaderPaths & shaderPaths, const PipelineConfigurationInfo & pipelineConfigurationInfo);
 
 		~Renderer();
 
