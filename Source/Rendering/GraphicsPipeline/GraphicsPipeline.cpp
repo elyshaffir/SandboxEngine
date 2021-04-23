@@ -7,7 +7,7 @@ sandbox::GraphicsPipeline::GraphicsPipeline(VkDevice device, const sandbox::Grap
 											VkRenderPass renderPass) :
 		pipeline(VK_NULL_HANDLE), shaderModules(device, shaderPaths), layout(VK_NULL_HANDLE)
 {
-	CreateLayout(device); // ALERT Possibly moved
+	CreateLayout(device);
 	Create(device, configurationInfo, renderPass);
 }
 
@@ -39,7 +39,7 @@ void sandbox::GraphicsPipeline::Create(VkDevice device, const PipelineConfigurat
 	configurationInfo.PopulateGraphicsPipelineCreateInfo(&createInfo);
 	createInfo.renderPass = renderPass;
 	createInfo.basePipelineIndex = -1;
-	createInfo.layout = layout; // ALERT: Added to solve error
+	createInfo.layout = layout;
 
 	if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &createInfo, nullptr, &pipeline) != VK_SUCCESS)
 	{

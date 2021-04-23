@@ -99,8 +99,8 @@ void sandbox::Device::CreateCommandBuffers(VkPipeline pipeline)
 
 		vkCmdBeginRenderPass(commandBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-		vkCmdDraw(commandBuffers[i], 3, 1, 0, 0); // ALERT: Used to be commandBuffers[0]
-		vkCmdEndRenderPass(commandBuffers[i]); // ALERT: Used to be commandBuffers[0]
+		vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+		vkCmdEndRenderPass(commandBuffers[i]);
 		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS)
 		{
 			throw std::runtime_error("Failed to record command buffer");
