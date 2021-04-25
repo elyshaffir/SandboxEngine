@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_INSTANCE_H
-#define SANDBOXENGINE_INSTANCE_H
+#pragma once
 
 #include <vulkan/vulkan.h>
 #include <array>
@@ -31,5 +30,3 @@ namespace sandbox
 		void Create();
 	};
 }
-
-#endif //SANDBOXENGINE_INSTANCE_H

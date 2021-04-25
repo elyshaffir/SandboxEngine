@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_MATERIALS_H
-#define SANDBOXENGINE_MATERIALS_H
+#pragma once
 
 #include <Physics/Material/Material.h>
 
@@ -11,5 +10,3 @@ namespace sandbox
 		static Material Air();
 	};
 }
-
-#endif //SANDBOXENGINE_MATERIALS_H

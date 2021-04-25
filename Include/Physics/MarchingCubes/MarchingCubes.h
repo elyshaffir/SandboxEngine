@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_MARCHINGCUBES_H
-#define SANDBOXENGINE_MARCHINGCUBES_H
+#pragma once
 
 namespace sandbox::MarchingCubes
 {
@@ -8,5 +7,3 @@ namespace sandbox::MarchingCubes
 
 	constexpr GridIndex GRID_SIZE = 8;
 }
-
-#endif //SANDBOXENGINE_MARCHINGCUBES_H

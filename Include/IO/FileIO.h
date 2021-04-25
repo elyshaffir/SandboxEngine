@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_FILEIO_H
-#define SANDBOXENGINE_FILEIO_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -12,5 +11,3 @@ namespace sandbox
 		static std::vector<char> ReadFile(const std::string & path);
 	};
 }
-
-#endif //SANDBOXENGINE_FILEIO_H

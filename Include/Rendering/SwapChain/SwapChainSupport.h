@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_SWAPCHAINSUPPORT_H
-#define SANDBOXENGINE_SWAPCHAINSUPPORT_H
+#pragma once
 
 #include <Rendering/Device/QueueFamilyIndices.h>
 
@@ -63,5 +62,3 @@ namespace sandbox
 		void FindDepthFormat(VkPhysicalDevice physicalDevice);
 	};
 }
-
-#endif //SANDBOXENGINE_SWAPCHAINSUPPORT_H

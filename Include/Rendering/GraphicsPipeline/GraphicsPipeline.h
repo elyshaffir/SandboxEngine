@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_GRAPHICSPIPELINE_H
-#define SANDBOXENGINE_GRAPHICSPIPELINE_H
+#pragma once
 
 #include <Rendering/Device/Device.h>
 #include <Rendering/GraphicsPipeline/GraphicsShaderModules.h>
@@ -26,5 +25,3 @@ namespace sandbox
 		void CreateLayout(VkDevice device);
 	};
 }
-
-#endif //SANDBOXENGINE_GRAPHICSPIPELINE_H

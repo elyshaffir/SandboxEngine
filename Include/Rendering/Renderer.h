@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_RENDERER_H
-#define SANDBOXENGINE_RENDERER_H
+#pragma once
 
 #include <Rendering/Window/Window.h>
 #include <Rendering/Instance/Instance.h>
@@ -34,5 +33,3 @@ namespace sandbox
 		uint32_t currentFrame;
 	};
 }
-
-#endif //SANDBOXENGINE_RENDERER_H

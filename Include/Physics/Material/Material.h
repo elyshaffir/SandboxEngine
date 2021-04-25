@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_MATERIAL_H
-#define SANDBOXENGINE_MATERIAL_H
+#pragma once
 
 #include <string>
 #include <Physics/Material/MaterialState.h>
@@ -17,5 +16,3 @@ namespace sandbox
 		const Physics::Density averageDensity;
 	};
 }
-
-#endif //SANDBOXENGINE_MATERIAL_H

@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_MATERIALSTATE_H
-#define SANDBOXENGINE_MATERIALSTATE_H
+#pragma once
 
 #include <Physics/Physics.h>
 
@@ -18,5 +17,3 @@ namespace sandbox
 		Physics::Temperature condensingTemperature;
 	};
 }
-
-#endif //SANDBOXENGINE_MATERIALSTATE_H

@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_DEBUGGING_H
-#define SANDBOXENGINE_DEBUGGING_H
+#pragma once
 
 #include <glog/logging.h>
 
@@ -14,5 +13,3 @@ namespace sandbox
 		static void Initialize(char * argv0);
 	};
 }
-
-#endif //SANDBOXENGINE_DEBUGGING_H

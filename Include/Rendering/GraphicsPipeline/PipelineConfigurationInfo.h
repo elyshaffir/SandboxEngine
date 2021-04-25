@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_PIPELINECONFIGURATIONINFO_H
-#define SANDBOXENGINE_PIPELINECONFIGURATIONINFO_H
+#pragma once
 
 #include <vulkan/vulkan.h>
 
@@ -29,5 +28,3 @@ namespace sandbox
 		uint32_t subpass;
 	};
 }
-
-#endif //SANDBOXENGINE_PIPELINECONFIGURATIONINFO_H

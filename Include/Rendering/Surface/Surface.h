@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_SURFACE_H
-#define SANDBOXENGINE_SURFACE_H
+#pragma once
 
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
@@ -19,5 +18,3 @@ namespace sandbox
 		void Create(VkInstance instance, GLFWwindow * window);
 	};
 }
-
-#endif //SANDBOXENGINE_SURFACE_H

@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_QUEUEFAMILYINDICES_H
-#define SANDBOXENGINE_QUEUEFAMILYINDICES_H
+#pragma once
 
 #include <optional>
 #include <vector>
@@ -30,5 +29,3 @@ namespace sandbox
 		std::optional<uint32_t> presentFamily;
 	};
 }
-
-#endif //SANDBOXENGINE_QUEUEFAMILYINDICES_H

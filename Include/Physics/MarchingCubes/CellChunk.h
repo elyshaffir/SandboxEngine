@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_CELLCHUNK_H
-#define SANDBOXENGINE_CELLCHUNK_H
+#pragma once
 
 namespace sandbox
 {
@@ -11,5 +10,3 @@ namespace sandbox
 
 	};
 }
-
-#endif //SANDBOXENGINE_CELLCHUNK_H

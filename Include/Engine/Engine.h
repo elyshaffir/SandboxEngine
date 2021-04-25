@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_ENGINE_H
-#define SANDBOXENGINE_ENGINE_H
+#pragma once
 
 #include <vector>
 
@@ -17,5 +16,3 @@ namespace sandbox
 		static std::vector<const char *> GetRequiredGLFWExtensions();
 	};
 }
-
-#endif //SANDBOXENGINE_ENGINE_H

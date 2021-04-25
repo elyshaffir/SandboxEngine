@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_CHUNK_H
-#define SANDBOXENGINE_CHUNK_H
+#pragma once
 
 #include <memory>
 
@@ -21,5 +20,3 @@ namespace sandbox
 		std::unique_ptr<CellGrid> cellGrid;
 	};
 }
-
-#endif //SANDBOXENGINE_CHUNK_H

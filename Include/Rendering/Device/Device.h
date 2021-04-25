@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_DEVICE_H
-#define SANDBOXENGINE_DEVICE_H
+#pragma once
 
 #include <Rendering/Device/QueueFamilyIndices.h>
 #include <Rendering/SwapChain/SwapChainSupport.h>
@@ -44,5 +43,3 @@ namespace sandbox
 		void CreateSwapChain(VkSurfaceKHR surface);
 	};
 }
-
-#endif //SANDBOXENGINE_DEVICE_H

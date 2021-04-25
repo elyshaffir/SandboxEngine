@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_WINDOW_H
-#define SANDBOXENGINE_WINDOW_H
+#pragma once
 
 #include <string>
 #include <memory>
@@ -39,5 +38,3 @@ namespace sandbox
 		void Create();
 	};
 }
-
-#endif //SANDBOXENGINE_WINDOW_H

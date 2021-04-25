@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_SWAPCHAIN_H
-#define SANDBOXENGINE_SWAPCHAIN_H
+#pragma once
 
 #include <Rendering/SwapChain/SwapChainSupport.h>
 #include <Rendering/Device/QueueFamilyIndices.h>
@@ -61,5 +60,3 @@ namespace sandbox
 		void CreateSyncObjects(VkDevice device);
 	};
 }
-
-#endif //SANDBOXENGINE_SWAPCHAIN_H

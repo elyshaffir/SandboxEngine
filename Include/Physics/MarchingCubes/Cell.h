@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_CELL_H
-#define SANDBOXENGINE_CELL_H
+#pragma once
 
 #include <Physics/Material/Material.h>
 #include <Physics/MarchingCubes/MarchingCubes.h>
@@ -19,5 +18,3 @@ namespace sandbox
 		MarchingCubes::SurfaceLevel surfaceLevel;
 	};
 }
-
-#endif //SANDBOXENGINE_CELL_H

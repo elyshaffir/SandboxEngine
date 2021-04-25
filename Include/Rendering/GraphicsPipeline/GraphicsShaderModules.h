@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_GRAPHICSSHADERMODULES_H
-#define SANDBOXENGINE_GRAPHICSSHADERMODULES_H
+#pragma once
 
 #include <string>
 #include <array>
@@ -28,5 +27,3 @@ namespace sandbox
 		VkShaderModule fragmentShaderModule;
 	};
 }
-
-#endif //SANDBOXENGINE_GRAPHICSSHADERMODULES_H

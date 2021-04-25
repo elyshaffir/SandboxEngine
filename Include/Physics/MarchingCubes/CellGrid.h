@@ -1,5 +1,4 @@
-#ifndef SANDBOXENGINE_CELLGRID_H
-#define SANDBOXENGINE_CELLGRID_H
+#pragma once
 
 #include <array>
 #include <memory>
@@ -21,5 +20,3 @@ namespace sandbox
 							  MarchingCubes::GRID_SIZE>, MarchingCubes::GRID_SIZE> cells;
 	};
 }
-
-#endif //SANDBOXENGINE_CELLGRID_H
