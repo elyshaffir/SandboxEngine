@@ -45,66 +45,44 @@ static VkPhysicalDeviceFeatures GenerateRequiredDeviceFeatures()
 }
 
 sandbox::Device::Device(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent)
-		: physicalDevice(), physicalDeviceProperties(), device(), graphicsQueue(), presentQueue(), commandPool(),
-		  queueFamilyIndices(), swapChainSupport(), swapChain()
+		: physicalDevice(), device(), swapChainSupport()
 {
 	PickPhysicalDevice(instance, surface, windowExtent);
-	CreateLogicalDevice();
-	CreateCommandPool();
-	CreateSwapChain(surface);
 }
 
-void sandbox::Device::Destroy()
+void sandbox::Device::Destroy() const
 {
-	swapChain.Destroy(device);
-	vkDestroyCommandPool(device, commandPool, nullptr);
 	vkDestroyDevice(device, nullptr);
 }
 
-void sandbox::Device::CreateCommandBuffers(VkPipeline pipeline)
+void sandbox::Device::CreateLogicalDevice(const std::set<uint32_t> & queueFamilies)
 {
-	swapChainSupport.ResizeCommandBuffersVector(commandBuffers);
-	VkCommandBufferAllocateInfo allocateInfo = { };
-	allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocateInfo.commandPool = commandPool;
-	allocateInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
+	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+	float queuePriority = 1.0f;
 
-	if (vkAllocateCommandBuffers(device, &allocateInfo, commandBuffers.data()) != VK_SUCCESS)
+	for (uint32_t queueFamily : queueFamilies)
 	{
-		throw std::runtime_error("Failed to allocate command buffers");
+		VkDeviceQueueCreateInfo queueCreateInfo = { };
+		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		queueCreateInfo.queueFamilyIndex = queueFamily;
+		queueCreateInfo.queueCount = 1;
+		queueCreateInfo.pQueuePriorities = &queuePriority;
+		queueCreateInfos.push_back(queueCreateInfo);
 	}
 
-	for (size_t i = 0; i < commandBuffers.size(); i++)
+	VkPhysicalDeviceFeatures requiredDeviceFeatures = GenerateRequiredDeviceFeatures();
+
+	VkDeviceCreateInfo createInfo = { };
+	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+	createInfo.pQueueCreateInfos = queueCreateInfos.data();
+	createInfo.pEnabledFeatures = &requiredDeviceFeatures;
+	createInfo.enabledExtensionCount = static_cast<uint32_t>(DEVICE_EXTENSIONS.size());
+	createInfo.ppEnabledExtensionNames = DEVICE_EXTENSIONS.data();
+
+	if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
 	{
-		VkCommandBufferBeginInfo beginInfo = { };
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-		if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS)
-		{
-			throw std::runtime_error("Failed to begin recording command buffer");
-		}
-
-		VkRenderPassBeginInfo renderPassBeginInfo = { };
-		renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassBeginInfo.renderPass = swapChain.renderPass;
-		renderPassBeginInfo.framebuffer = swapChain.GetFrameBuffer(i);
-		swapChainSupport.PopulateRenderPassBeginInfo(&renderPassBeginInfo);
-
-		std::array<VkClearValue, 2> clearValues = { };
-		clearValues[0].color = {0.93f, 0.69f, 0.86f, 1.0f};
-		clearValues[1].depthStencil = {1.0f, 0};
-		renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-		renderPassBeginInfo.pClearValues = clearValues.data();
-
-		vkCmdBeginRenderPass(commandBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-		vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
-		vkCmdEndRenderPass(commandBuffers[i]);
-		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS)
-		{
-			throw std::runtime_error("Failed to record command buffer");
-		}
+		throw std::runtime_error("Failed to create logical device");
 	}
 }
 
@@ -122,14 +100,12 @@ void sandbox::Device::PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surfa
 
 	for (const auto & availableDevice : availableDevices)
 	{
-		QueueFamilyIndices potentialQueueFamilyIndices(availableDevice, surface);
 		SwapChainSupport potentialSwapChainSupport(availableDevice, surface, windowExtent);
 
-		if (potentialQueueFamilyIndices.IsComplete() && IsDeviceExtensionsSupported(availableDevice) &&
-			potentialSwapChainSupport.IsComplete() && IsDeviceRequiredFeaturesSupported(availableDevice))
+		if (IsDeviceExtensionsSupported(availableDevice) && potentialSwapChainSupport.IsComplete() &&
+			IsDeviceRequiredFeaturesSupported(availableDevice))
 		{
 			physicalDevice = availableDevice;
-			queueFamilyIndices = potentialQueueFamilyIndices;
 			swapChainSupport = potentialSwapChainSupport;
 			break;
 		}
@@ -140,48 +116,7 @@ void sandbox::Device::PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surfa
 		throw std::runtime_error("Failed to find a suitable GPU");
 	}
 
+	VkPhysicalDeviceProperties physicalDeviceProperties = { };
 	vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
 	LOG(INFO) << "Physical device: " << physicalDeviceProperties.deviceName;
-}
-
-void sandbox::Device::CreateLogicalDevice()
-{
-	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-	float queuePriority = 1.0f;  // ALERT: For testing only!
-	queueFamilyIndices.FillQueueCreateInfos(queueCreateInfos, &queuePriority);
-
-	VkPhysicalDeviceFeatures requiredDeviceFeatures = GenerateRequiredDeviceFeatures();
-
-	VkDeviceCreateInfo createInfo = { };
-	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
-	createInfo.pQueueCreateInfos = queueCreateInfos.data();
-	createInfo.pEnabledFeatures = &requiredDeviceFeatures;
-	createInfo.enabledExtensionCount = static_cast<uint32_t>(DEVICE_EXTENSIONS.size());
-	createInfo.ppEnabledExtensionNames = DEVICE_EXTENSIONS.data();
-
-	if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to create logical device");
-	}
-
-	queueFamilyIndices.GetDeviceQueues(device, &graphicsQueue, &presentQueue);
-}
-
-void sandbox::Device::CreateCommandPool()
-{
-	VkCommandPoolCreateInfo poolInfo = { };
-	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	queueFamilyIndices.PopulateGraphicsCommandPoolCreateInfo(&poolInfo);
-	poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-
-	if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to create command pool");
-	}
-}
-
-void sandbox::Device::CreateSwapChain(VkSurfaceKHR surface)
-{
-	swapChain = SwapChain(swapChainSupport, queueFamilyIndices, physicalDevice, device, surface);
 }

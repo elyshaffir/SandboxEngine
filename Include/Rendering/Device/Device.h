@@ -1,11 +1,10 @@
 #pragma once
 
-#include <Rendering/Device/QueueFamilyIndices.h>
 #include <Rendering/SwapChain/SwapChainSupport.h>
-#include <Rendering/SwapChain/SwapChain.h>
 
 #include <array>
 #include <vulkan/vulkan.h>
+#include <set>
 
 namespace sandbox
 {
@@ -13,33 +12,18 @@ namespace sandbox
 	{
 	public:
 		VkDevice device;
-		SwapChain swapChain;
-		std::vector<VkCommandBuffer> commandBuffers;
-		VkQueue graphicsQueue;
-		VkQueue presentQueue;
+		VkPhysicalDevice physicalDevice;
+		SwapChainSupport swapChainSupport;
 
 		static constexpr std::array<const char *, 1> DEVICE_EXTENSIONS = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 		Device(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent);
 
-		void Destroy();
+		void Destroy() const;
 
-		void CreateCommandBuffers(VkPipeline pipeline);
+		void CreateLogicalDevice(const std::set<uint32_t>& queueFamilies);
 
 	private:
-		VkPhysicalDevice physicalDevice;
-		VkPhysicalDeviceProperties physicalDeviceProperties;
-		VkCommandPool commandPool;
-		QueueFamilyIndices queueFamilyIndices;
-
-		SwapChainSupport swapChainSupport;
-
 		void PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent);
-
-		void CreateLogicalDevice();
-
-		void CreateCommandPool();
-
-		void CreateSwapChain(VkSurfaceKHR surface);
 	};
 }

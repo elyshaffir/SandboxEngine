@@ -11,6 +11,8 @@ namespace sandbox
 	public:
 		VkPipeline pipeline;
 
+		GraphicsPipeline() = default;
+
 		GraphicsPipeline(VkDevice device, const GraphicsShaderPaths & shaderPaths,
 						 const PipelineConfigurationInfo & configurationInfo, VkRenderPass renderPass);
 

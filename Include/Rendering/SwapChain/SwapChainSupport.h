@@ -1,7 +1,5 @@
 #pragma once
 
-#include <Rendering/Device/QueueFamilyIndices.h>
-
 #include <vector>
 #include <array>
 
@@ -15,6 +13,9 @@ namespace sandbox
 	class SwapChainSupport
 	{
 	public:
+		uint32_t imageCount;
+		VkExtent2D chosenExtent;
+
 		SwapChainSupport() = default;
 
 		SwapChainSupport(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkExtent2D windowExtent);
@@ -35,18 +36,12 @@ namespace sandbox
 
 		void PopulateFramebufferCreateInfo(VkFramebufferCreateInfo * framebufferCreateInfo) const;
 
-		void ResizeCommandBuffersVector(std::vector<VkCommandBuffer> & commandBuffers) const;
-
-		void PopulateRenderPassBeginInfo(VkRenderPassBeginInfo * renderPassBeginInfo) const;
-
 	private:
 		VkSurfaceCapabilitiesKHR capabilities;
 		std::vector<VkSurfaceFormatKHR> formats;
 		std::vector<VkPresentModeKHR> presentModes;
 		VkSurfaceFormatKHR chosenSurfaceFormat;
 		VkPresentModeKHR chosenPresentMode;
-		VkExtent2D chosenExtent;
-		uint32_t imageCount;
 		VkFormat depthFormat;
 
 		void Create(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);

@@ -1,6 +1,7 @@
 #include <Rendering/SwapChain/SwapChain.h>
 
 #include <stdexcept>
+#include <array>
 
 static uint32_t GetDeviceMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter,
 									VkMemoryPropertyFlags properties)
@@ -46,11 +47,12 @@ static void CreateImageWithInfo(VkDevice device, VkPhysicalDevice physicalDevice
 	}
 }
 
-sandbox::SwapChain::SwapChain(const SwapChainSupport & supportDetails, const QueueFamilyIndices & queueFamilyIndices,
-							  VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface)
+sandbox::SwapChain::SwapChain(const SwapChainSupport & supportDetails, VkPhysicalDevice physicalDevice,
+							  VkDevice device, VkSurfaceKHR surface, uint32_t graphicsFamilyIndex,
+							  uint32_t presentFamilyIndex)
 		: swapChain(), frameIndex(), renderPass()
 {
-	Create(supportDetails, queueFamilyIndices, device, surface);
+	Create(supportDetails, device, surface, graphicsFamilyIndex, presentFamilyIndex);
 	CreateImageViews(supportDetails, device);
 	CreateRenderPass(supportDetails, device);
 	CreateDepthResources(supportDetails, device, physicalDevice);
@@ -151,13 +153,8 @@ VkResult sandbox::SwapChain::SubmitCommandBuffers(VkDevice device, const VkComma
 	return result;
 }
 
-VkFramebuffer sandbox::SwapChain::GetFrameBuffer(uint32_t framebufferIndex)
-{
-	return framebuffers[framebufferIndex];
-}
-
-void sandbox::SwapChain::Create(const SwapChainSupport & supportDetails, const QueueFamilyIndices & queueFamilyIndices,
-								VkDevice device, VkSurfaceKHR surface)
+void sandbox::SwapChain::Create(const SwapChainSupport & supportDetails, VkDevice device, VkSurfaceKHR surface,
+								uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex)
 {
 	VkSwapchainCreateInfoKHR createInfo = { };
 	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -165,7 +162,17 @@ void sandbox::SwapChain::Create(const SwapChainSupport & supportDetails, const Q
 	supportDetails.PopulateSwapChainCreateInfo(&createInfo);
 	createInfo.imageArrayLayers = 1;
 	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-	queueFamilyIndices.PopulateSwapChainCreateInfo(&createInfo);
+	if (graphicsFamilyIndex != presentFamilyIndex)
+	{
+		createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+		createInfo.queueFamilyIndexCount = 2;
+		uint32_t queueFamilyIndices[2] = {graphicsFamilyIndex, presentFamilyIndex};
+		createInfo.pQueueFamilyIndices = queueFamilyIndices;
+	}
+	else
+	{
+		createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	}
 
 	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 	createInfo.clipped = VK_TRUE;

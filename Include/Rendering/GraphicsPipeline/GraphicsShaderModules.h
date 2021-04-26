@@ -16,6 +16,8 @@ namespace sandbox
 	class GraphicsShaderModules
 	{
 	public:
+		GraphicsShaderModules() = default;
+
 		GraphicsShaderModules(VkDevice device, const GraphicsShaderPaths & shaderPaths);
 
 		std::array<VkPipelineShaderStageCreateInfo, 2> GetCreateInfos() const;
