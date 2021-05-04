@@ -17,7 +17,7 @@ static void CreateShaderModule(VkDevice device, const std::vector<char> & code, 
 }
 
 sandbox::GraphicsShaderModules::GraphicsShaderModules(VkDevice device, const GraphicsShaderPaths & shaderPaths)
-		: vertexShaderModule(VK_NULL_HANDLE), fragmentShaderModule(VK_NULL_HANDLE)
+		: vertexShaderModule(), fragmentShaderModule()
 {
 	CreateShaderModule(device, FileIO::ReadFile(shaderPaths.vertexShaderPath), &vertexShaderModule);
 	CreateShaderModule(device, FileIO::ReadFile(shaderPaths.fragmentShaderPath), &fragmentShaderModule);

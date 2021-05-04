@@ -45,13 +45,20 @@ static VkPhysicalDeviceFeatures GenerateRequiredDeviceFeatures()
 }
 
 sandbox::Device::Device(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent)
-		: physicalDevice(), device(), swapChainSupport()
+		: physicalDevice(), device(), swapChainSupport(), graphicsQueue(), presentQueue()
 {
 	PickPhysicalDevice(instance, surface, windowExtent);
+	CreateLogicalDevice({graphicsQueue.family, presentQueue.family});
+	swapChain = SwapChain(swapChainSupport, physicalDevice, device, surface, graphicsQueue.family, presentQueue.family);
+	graphicsQueue.Create(device, swapChainSupport.imageCount);
+	presentQueue.Create(device);
 }
 
-void sandbox::Device::Destroy() const
+void sandbox::Device::Destroy()
 {
+	graphicsQueue.Destroy(device);
+	presentQueue.Destroy(device);
+	swapChain.Destroy(device);
 	vkDestroyDevice(device, nullptr);
 }
 
@@ -86,6 +93,30 @@ void sandbox::Device::CreateLogicalDevice(const std::set<uint32_t> & queueFamili
 	}
 }
 
+void sandbox::Device::RecordRenderPass(VkPipeline pipeline)
+{
+	graphicsQueue.RecordRenderPass(swapChain.renderPass, swapChain.framebuffers, swapChainSupport.chosenExtent,
+								   pipeline);
+}
+
+void sandbox::Device::DrawFrame()
+{
+	uint32_t imageIndex = 0;
+	VkResult result = swapChain.AcquireNextImage(device, &imageIndex);
+
+	if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+	{
+		throw std::runtime_error("Failed to acquire swap chain image");
+	}
+
+	result = swapChain.SubmitCommandBuffers(device, graphicsQueue.GetCommandBuffer(imageIndex), &imageIndex,
+											graphicsQueue.queue, presentQueue.queue);
+	if (result != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to present swap chain image");
+	}
+}
+
 void sandbox::Device::PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent)
 {
 	uint32_t deviceCount = 0;
@@ -103,7 +134,8 @@ void sandbox::Device::PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surfa
 		SwapChainSupport potentialSwapChainSupport(availableDevice, surface, windowExtent);
 
 		if (IsDeviceExtensionsSupported(availableDevice) && potentialSwapChainSupport.IsComplete() &&
-			IsDeviceRequiredFeaturesSupported(availableDevice))
+			IsDeviceRequiredFeaturesSupported(availableDevice) && graphicsQueue.FindFamily(availableDevice) &&
+			presentQueue.FindFamily(availableDevice, surface))
 		{
 			physicalDevice = availableDevice;
 			swapChainSupport = potentialSwapChainSupport;

@@ -1,15 +1,16 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
+#include <Rendering/GraphicsPipeline/GraphicsShaderModules.h>
 
 namespace sandbox
 {
-	class PipelineConfigurationInfo
+	class GraphicsPipelineConfigurationInfo
 	{
 	public:
-		explicit PipelineConfigurationInfo(VkExtent2D frameExtent);
+		GraphicsShaderPaths shaderPaths;
 
-		void Create(VkExtent2D frameExtent);
+		GraphicsPipelineConfigurationInfo(VkExtent2D frameExtent, GraphicsShaderPaths & shaderPaths);
 
 		void PopulateViewportCreateInfo(VkPipelineViewportStateCreateInfo * viewportCreateInfo) const;
 

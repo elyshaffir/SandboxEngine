@@ -3,24 +3,25 @@
 #include <stdexcept>
 #include <array>
 
-sandbox::GraphicsQueue::GraphicsQueue(VkPhysicalDevice physicalDevice) : Queue()
+bool sandbox::GraphicsQueue::FindFamily(VkPhysicalDevice physicalDevice)
 {
-	FindFamily(physicalDevice);
+	uint32_t i = 0;
+	for (const auto & queueFamily : GetQueueFamilies(physicalDevice))
+	{
+		if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+		{
+			family = i;
+			return true;
+		}
+		i++;
+	}
+	return false;
 }
 
-void sandbox::GraphicsQueue::CreateCommandBuffers(VkDevice device, uint32_t imageCount)
+void sandbox::GraphicsQueue::Create(VkDevice device, uint32_t imageCount)
 {
-	commandBuffers.resize(imageCount);
-	VkCommandBufferAllocateInfo allocateInfo = { };
-	allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocateInfo.commandPool = commandPool;
-	allocateInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
-
-	if (vkAllocateCommandBuffers(device, &allocateInfo, commandBuffers.data()) != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to allocate command buffers");
-	}
+	Queue::Create(device);
+	CreateCommandBuffers(device, imageCount);
 }
 
 void sandbox::GraphicsQueue::RecordRenderPass(VkRenderPass renderPass, const std::vector<VkFramebuffer> & framebuffers,
@@ -64,17 +65,17 @@ VkCommandBuffer * sandbox::GraphicsQueue::GetCommandBuffer(uint32_t index)
 	return &commandBuffers[index];
 }
 
-void sandbox::GraphicsQueue::FindFamily(VkPhysicalDevice physicalDevice)
+void sandbox::GraphicsQueue::CreateCommandBuffers(VkDevice device, uint32_t imageCount)
 {
-	uint32_t i = 0;
-	for (const auto & queueFamily : GetQueueFamilies(physicalDevice))
+	commandBuffers.resize(imageCount);
+	VkCommandBufferAllocateInfo allocateInfo = { };
+	allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocateInfo.commandPool = commandPool;
+	allocateInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
+
+	if (vkAllocateCommandBuffers(device, &allocateInfo, commandBuffers.data()) != VK_SUCCESS)
 	{
-		if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
-		{
-			family = i;
-			return;
-		}
-		i++;
+		throw std::runtime_error("Failed to allocate command buffers");
 	}
-	throw std::runtime_error("Could not find a graphics queue family");
 }

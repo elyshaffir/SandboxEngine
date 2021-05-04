@@ -58,7 +58,7 @@ static void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT 
 
 #endif
 
-sandbox::Instance::Instance() : instance(VK_NULL_HANDLE), debugMessenger(VK_NULL_HANDLE)
+sandbox::Instance::Instance() : instance(), debugMessenger()
 {
 	Create();
 #ifdef ENABLE_VALIDATION_LAYERS

@@ -1,14 +1,10 @@
-#include <Rendering/GraphicsPipeline/PipelineConfigurationInfo.h>
+#include <Rendering/GraphicsPipeline/GraphicsPipelineConfigurationInfo.h>
 
-sandbox::PipelineConfigurationInfo::PipelineConfigurationInfo(VkExtent2D frameExtent)
-		: viewport({ }), scissor({ }), inputAssemblyCreateInfo({ }), rasterizationCreateInfo({ }),
-		  multisampleCreateInfo({ }), colorBlendAttachment({ }), colorBlendCreateInfo({ }), depthStencilCreateInfo({ }),
-		  pipelineLayout(VK_NULL_HANDLE), subpass(0)
-{
-	Create(frameExtent);
-}
-
-void sandbox::PipelineConfigurationInfo::Create(VkExtent2D frameExtent)
+sandbox::GraphicsPipelineConfigurationInfo::GraphicsPipelineConfigurationInfo(VkExtent2D frameExtent,
+																			  GraphicsShaderPaths & shaderPaths)
+		: shaderPaths(shaderPaths), viewport(), scissor(), inputAssemblyCreateInfo(), rasterizationCreateInfo(),
+		  multisampleCreateInfo(), colorBlendAttachment(), colorBlendCreateInfo(), depthStencilCreateInfo(),
+		  pipelineLayout(), subpass()
 {
 	inputAssemblyCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	inputAssemblyCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -53,14 +49,14 @@ void sandbox::PipelineConfigurationInfo::Create(VkExtent2D frameExtent)
 	depthStencilCreateInfo.stencilTestEnable = VK_FALSE;
 }
 
-void sandbox::PipelineConfigurationInfo::PopulateViewportCreateInfo(
+void sandbox::GraphicsPipelineConfigurationInfo::PopulateViewportCreateInfo(
 		VkPipelineViewportStateCreateInfo * viewportCreateInfo) const
 {
 	viewportCreateInfo->pViewports = &viewport;
 	viewportCreateInfo->pScissors = &scissor;
 }
 
-void sandbox::PipelineConfigurationInfo::PopulateGraphicsPipelineCreateInfo(
+void sandbox::GraphicsPipelineConfigurationInfo::PopulateGraphicsPipelineCreateInfo(
 		VkGraphicsPipelineCreateInfo * graphicsPipelineCreateInfo) const
 {
 	graphicsPipelineCreateInfo->pInputAssemblyState = &inputAssemblyCreateInfo;

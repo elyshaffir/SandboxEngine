@@ -11,17 +11,17 @@ namespace sandbox
 		VkQueue queue;
 		uint32_t family;
 
-		void Create(VkDevice device);
-
 		void Destroy(VkDevice device) const;
 
 	protected:
 		std::vector<VkCommandBuffer> commandBuffers;
 		VkCommandPool commandPool;
 
+		static std::vector<VkQueueFamilyProperties> GetQueueFamilies(VkPhysicalDevice physicalDevice);
+
 		Queue();
 
-		static std::vector<VkQueueFamilyProperties> GetQueueFamilies(VkPhysicalDevice physicalDevice);
+		virtual void Create(VkDevice device);
 
 	private:
 		void CreateCommandPool(VkDevice device);

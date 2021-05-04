@@ -1,6 +1,5 @@
 #include <Rendering/SwapChain/SwapChainSupport.h>
 
-#include <limits>
 #include <algorithm>
 
 #include <glog/logging.h>

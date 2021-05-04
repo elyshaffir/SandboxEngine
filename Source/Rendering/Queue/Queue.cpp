@@ -2,8 +2,9 @@
 
 #include <stdexcept>
 
-sandbox::Queue::Queue() : queue(), family(), commandPool(VK_NULL_HANDLE)
+void sandbox::Queue::Destroy(VkDevice device) const
 {
+	vkDestroyCommandPool(device, commandPool, nullptr);
 }
 
 std::vector<VkQueueFamilyProperties> sandbox::Queue::GetQueueFamilies(VkPhysicalDevice physicalDevice)
@@ -23,9 +24,8 @@ void sandbox::Queue::Create(VkDevice device)
 	CreateCommandPool(device);
 }
 
-void sandbox::Queue::Destroy(VkDevice device) const
+sandbox::Queue::Queue() : queue(), family(), commandPool()
 {
-	vkDestroyCommandPool(device, commandPool, nullptr);
 }
 
 void sandbox::Queue::CreateCommandPool(VkDevice device)

@@ -18,9 +18,9 @@ int main(int argc, char * argv[])
 	};
 
 	WindowConfigurationInfo windowConfigurationInfo = {800, 500, "Good job, me!"};
-	PipelineConfigurationInfo pipelineConfigurationInfo({800, 500});
+	GraphicsPipelineConfigurationInfo pipelineConfigurationInfo({800, 500}, defaultShaders);
 
-	sandbox::Renderer renderer(windowConfigurationInfo, defaultShaders, pipelineConfigurationInfo);
+	sandbox::Renderer renderer(windowConfigurationInfo, pipelineConfigurationInfo);
 
 	while (!renderer.ShouldClose())
 	{
