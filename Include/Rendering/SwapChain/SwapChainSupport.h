@@ -37,7 +37,7 @@ namespace sandbox
 		void PopulateFramebufferCreateInfo(VkFramebufferCreateInfo * framebufferCreateInfo) const;
 
 	private:
-		VkSurfaceCapabilitiesKHR capabilities;
+		VkSurfaceCapabilitiesKHR surfaceCapabilities;
 		std::vector<VkSurfaceFormatKHR> formats;
 		std::vector<VkPresentModeKHR> presentModes;
 		VkSurfaceFormatKHR chosenSurfaceFormat;

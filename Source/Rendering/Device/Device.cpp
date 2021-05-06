@@ -93,6 +93,11 @@ void sandbox::Device::CreateLogicalDevice(const std::set<uint32_t> & queueFamili
 	}
 }
 
+VkRenderPass sandbox::Device::GetRenderPass() const
+{
+	return swapChain.renderPass;
+}
+
 void sandbox::Device::RecordRenderPass(VkPipeline pipeline)
 {
 	graphicsQueue.RecordRenderPass(swapChain.renderPass, swapChain.framebuffers, swapChainSupport.chosenExtent,

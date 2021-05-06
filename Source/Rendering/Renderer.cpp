@@ -8,7 +8,7 @@ sandbox::Renderer::Renderer(const WindowConfigurationInfo & windowConfigurationI
 		  pipeline(),
 		  currentFrame()
 {
-	pipeline = GraphicsPipeline(device.device, pipelineConfigurationInfo, device.swapChain.renderPass);
+	pipeline = GraphicsPipeline(device.device, pipelineConfigurationInfo, device.GetRenderPass());
 	device.RecordRenderPass(pipeline.pipeline);
 }
 

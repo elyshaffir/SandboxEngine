@@ -55,10 +55,14 @@ static void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT 
 							 VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 	createInfo.pfnUserCallback = DebugCallback;
 }
-
+#else
+#include <stdexcept>
 #endif
 
-sandbox::Instance::Instance() : instance(), debugMessenger()
+sandbox::Instance::Instance() : instance()
+#ifdef ENABLE_VALIDATION_LAYERS
+	, debugMessenger()
+#endif
 {
 	Create();
 #ifdef ENABLE_VALIDATION_LAYERS

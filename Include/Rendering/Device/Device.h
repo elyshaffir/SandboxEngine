@@ -15,7 +15,6 @@ namespace sandbox
 	{
 	public:
 		VkDevice device;
-		SwapChain swapChain;
 
 		static constexpr std::array<const char *, 1> DEVICE_EXTENSIONS = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
@@ -24,6 +23,8 @@ namespace sandbox
 		void Destroy();
 
 		void CreateLogicalDevice(const std::set<uint32_t>& queueFamilies);
+
+		VkRenderPass GetRenderPass() const;
 
 		void RecordRenderPass(VkPipeline pipeline);
 
@@ -34,6 +35,7 @@ namespace sandbox
 		SwapChainSupport swapChainSupport;
 		GraphicsQueue graphicsQueue;
 		PresentQueue presentQueue;
+		SwapChain swapChain;
 
 		void PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent);
 	};

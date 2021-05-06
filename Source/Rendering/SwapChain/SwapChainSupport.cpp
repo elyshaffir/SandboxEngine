@@ -6,7 +6,7 @@
 
 sandbox::SwapChainSupport::SwapChainSupport(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface,
 											VkExtent2D windowExtent)
-		: capabilities(), chosenSurfaceFormat(), chosenPresentMode(), chosenExtent(), imageCount(), depthFormat()
+		: surfaceCapabilities(), chosenSurfaceFormat(), chosenPresentMode(), chosenExtent(), imageCount(), depthFormat()
 {
 	Create(physicalDevice, surface);
 	ChooseSurfaceFormat();
@@ -27,7 +27,7 @@ void sandbox::SwapChainSupport::PopulateSwapChainCreateInfo(VkSwapchainCreateInf
 	swapChainCreateInfo->imageFormat = chosenSurfaceFormat.format;
 	swapChainCreateInfo->imageColorSpace = chosenSurfaceFormat.colorSpace;
 	swapChainCreateInfo->imageExtent = chosenExtent;
-	swapChainCreateInfo->preTransform = capabilities.currentTransform;
+	swapChainCreateInfo->preTransform = surfaceCapabilities.currentTransform;
 	swapChainCreateInfo->presentMode = chosenPresentMode;
 }
 
@@ -66,7 +66,7 @@ void sandbox::SwapChainSupport::PopulateFramebufferCreateInfo(VkFramebufferCreat
 
 void sandbox::SwapChainSupport::Create(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface)
 {
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &capabilities);
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities);
 
 	uint32_t formatCount = 0;
 	vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, nullptr);
@@ -113,30 +113,23 @@ void sandbox::SwapChainSupport::ChoosePresentMode()
 		}
 	}
 
-	// for (const auto &availablePresentMode : availablePresentModes) { // TODO resolve
-	//   if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
-	//     std::cout << "Present mode: Immediate" << std::endl;
-	//     return availablePresentMode;
-	//   }
-	// }
-
 	LOG(INFO) << "Present mode: V-Sync";
 	chosenPresentMode = VK_PRESENT_MODE_FIFO_KHR;
 }
 
 void sandbox::SwapChainSupport::ChooseExtent(VkExtent2D windowExtent)
 {
-	if (capabilities.currentExtent.width != UINT32_MAX)
+	if (surfaceCapabilities.currentExtent.width != UINT32_MAX)
 	{
-		chosenExtent = capabilities.currentExtent;
+		chosenExtent = surfaceCapabilities.currentExtent;
 	}
 	else
 	{
 		VkExtent2D actualExtent = windowExtent;
-		actualExtent.width = std::max(capabilities.minImageExtent.width,
-									  std::min(capabilities.maxImageExtent.width, actualExtent.width));
-		actualExtent.height = std::max(capabilities.minImageExtent.height,
-									   std::min(capabilities.maxImageExtent.height, actualExtent.height));
+		actualExtent.width = std::max(surfaceCapabilities.minImageExtent.width,
+									  std::min(surfaceCapabilities.maxImageExtent.width, actualExtent.width));
+		actualExtent.height = std::max(surfaceCapabilities.minImageExtent.height,
+									   std::min(surfaceCapabilities.maxImageExtent.height, actualExtent.height));
 
 		chosenExtent = actualExtent;
 	}
@@ -144,10 +137,10 @@ void sandbox::SwapChainSupport::ChooseExtent(VkExtent2D windowExtent)
 
 void sandbox::SwapChainSupport::CalculateImageCount()
 {
-	imageCount = capabilities.minImageCount + 1;
-	if (capabilities.maxImageCount > 0 && imageCount > capabilities.maxImageCount)
+	imageCount = surfaceCapabilities.minImageCount + 1;
+	if (surfaceCapabilities.maxImageCount > 0 && imageCount > surfaceCapabilities.maxImageCount)
 	{
-		imageCount = capabilities.maxImageCount;
+		imageCount = surfaceCapabilities.maxImageCount;
 	}
 }
 
