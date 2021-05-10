@@ -11,6 +11,8 @@ set(libraries D:/DATA/Documents/C++/libraries)
 set(glm_DIR ${libraries}/glm/cmake/glm)
 find_package(glm REQUIRED)
 target_link_libraries(SandboxEngine glm::glm)
+add_compile_definitions(GLM_FORCE_RADIANS)
+add_compile_definitions(GLM_FORCE_DEPTH_ZERO_TO_ONE)
 
 set(WITH_GFLAGS OFF)
 set(BUILD_TESTING OFF)

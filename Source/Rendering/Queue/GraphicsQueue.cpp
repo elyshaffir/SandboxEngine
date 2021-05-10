@@ -25,7 +25,7 @@ void sandbox::GraphicsQueue::Create(VkDevice device, uint32_t imageCount)
 }
 
 void sandbox::GraphicsQueue::RecordRenderPass(VkRenderPass renderPass, const std::vector<VkFramebuffer> & framebuffers,
-											  VkExtent2D chosenExtent, VkPipeline pipeline)
+											  VkExtent2D chosenExtent, VkPipeline pipeline, Model & model)
 {
 	for (size_t i = 0; i < commandBuffers.size(); i++)
 	{
@@ -51,7 +51,8 @@ void sandbox::GraphicsQueue::RecordRenderPass(VkRenderPass renderPass, const std
 
 		vkCmdBeginRenderPass(commandBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-		vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+		model.Bind(commandBuffers[i]);
+		model.Draw(commandBuffers[i]);
 		vkCmdEndRenderPass(commandBuffers[i]);
 		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS)
 		{

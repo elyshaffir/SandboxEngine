@@ -1,4 +1,5 @@
 #include <Rendering/GraphicsPipeline/GraphicsPipeline.h>
+#include <Rendering/Model/Vertex.h>
 
 #include <stdexcept>
 
@@ -21,8 +22,14 @@ void sandbox::GraphicsPipeline::Destroy(VkDevice device)
 void sandbox::GraphicsPipeline::Create(VkDevice device, const GraphicsPipelineConfigurationInfo & configurationInfo,
 									   VkRenderPass renderPass)
 {
+	std::vector<VkVertexInputBindingDescription> bindingDescriptions = Vertex::GetBindingDescriptions();
+	std::vector<VkVertexInputAttributeDescription> attributeDescriptions = Vertex::GetAttributeDescriptions();
 	VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo = { };
 	vertexInputCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	vertexInputCreateInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+	vertexInputCreateInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescriptions.size());
+	vertexInputCreateInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+	vertexInputCreateInfo.pVertexBindingDescriptions = bindingDescriptions.data();
 
 	VkPipelineViewportStateCreateInfo viewportCreateInfo = { };
 	viewportCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;

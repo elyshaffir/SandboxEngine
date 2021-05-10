@@ -5,6 +5,7 @@
 #include <Rendering/Surface/Surface.h>
 #include <Rendering/Device/Device.h>
 #include <Rendering/GraphicsPipeline/GraphicsPipeline.h>
+#include <Rendering/Model/Model.h>
 
 #include <vector>
 
@@ -14,7 +15,8 @@ namespace sandbox
 	{
 	public:
 		Renderer(const WindowConfigurationInfo & windowConfigurationInfo,
-				 const GraphicsPipelineConfigurationInfo & pipelineConfigurationInfo);
+				 const GraphicsPipelineConfigurationInfo & pipelineConfigurationInfo,
+				 Model & model);
 
 		~Renderer();
 
@@ -31,5 +33,6 @@ namespace sandbox
 		Device device;
 		GraphicsPipeline pipeline;
 		uint32_t currentFrame;
+		Model & model;
 	};
 }

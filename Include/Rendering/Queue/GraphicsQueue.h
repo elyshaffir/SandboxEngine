@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Rendering/Queue/Queue.h>
+#include <Rendering/Model/Model.h>
 
 namespace sandbox
 {
@@ -12,7 +13,7 @@ namespace sandbox
 		void Create(VkDevice device, uint32_t imageCount);
 
 		void RecordRenderPass(VkRenderPass renderPass, const std::vector<VkFramebuffer> & framebuffers,
-							  VkExtent2D chosenExtent, VkPipeline pipeline);
+							  VkExtent2D chosenExtent, VkPipeline pipeline, Model & model);
 
 		VkCommandBuffer * GetCommandBuffer(uint32_t index);
 	private:

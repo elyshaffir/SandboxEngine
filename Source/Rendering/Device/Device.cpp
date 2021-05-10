@@ -4,18 +4,13 @@
 
 #include <glog/logging.h>
 
-
 static bool IsDeviceExtensionsSupported(VkPhysicalDevice physicalDevice)
 {
 	uint32_t extensionCount = 0;
 	vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, nullptr);
 
 	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-	vkEnumerateDeviceExtensionProperties(
-			physicalDevice,
-			nullptr,
-			&extensionCount,
-			availableExtensions.data());
+	vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, availableExtensions.data());
 
 	std::set<std::string> requiredExtensions(sandbox::Device::DEVICE_EXTENSIONS.begin(),
 											 sandbox::Device::DEVICE_EXTENSIONS.end());
@@ -45,11 +40,13 @@ static VkPhysicalDeviceFeatures GenerateRequiredDeviceFeatures()
 }
 
 sandbox::Device::Device(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent)
-		: physicalDevice(), device(), swapChainSupport(), graphicsQueue(), presentQueue()
+		: physicalDevice(), memoryProperties(), device(), swapChainSupport(), graphicsQueue(), presentQueue()
 {
 	PickPhysicalDevice(instance, surface, windowExtent);
+	memoryProperties = DeviceMemoryProperties(physicalDevice);
 	CreateLogicalDevice({graphicsQueue.family, presentQueue.family});
-	swapChain = SwapChain(swapChainSupport, physicalDevice, device, surface, graphicsQueue.family, presentQueue.family);
+	swapChain = SwapChain(swapChainSupport, memoryProperties, device, surface, graphicsQueue.family,
+						  presentQueue.family);
 	graphicsQueue.Create(device, swapChainSupport.imageCount);
 	presentQueue.Create(device);
 }
@@ -98,10 +95,23 @@ VkRenderPass sandbox::Device::GetRenderPass() const
 	return swapChain.renderPass;
 }
 
-void sandbox::Device::RecordRenderPass(VkPipeline pipeline)
+void sandbox::Device::RecordRenderPass(VkPipeline pipeline, Model & model)
 {
 	graphicsQueue.RecordRenderPass(swapChain.renderPass, swapChain.framebuffers, swapChainSupport.chosenExtent,
-								   pipeline);
+								   pipeline, model);
+}
+
+void sandbox::Device::AllocateVertexBuffer(VertexBuffer & vertexBuffer)
+{
+	BufferAllocationData allocationData = vertexBuffer.GenerateAllocationData();
+	CreateBuffer(allocationData.size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+				 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, vertexBuffer.buffer,
+				 allocationData.memory);
+
+	void * data = nullptr;
+	vkMapMemory(device, allocationData.memory, 0, allocationData.size, 0, &data);
+	memcpy(data, allocationData.data, static_cast<size_t>(allocationData.size));
+	vkUnmapMemory(device, allocationData.memory);
 }
 
 void sandbox::Device::DrawFrame()
@@ -156,4 +166,37 @@ void sandbox::Device::PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surfa
 	VkPhysicalDeviceProperties physicalDeviceProperties = { };
 	vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
 	LOG(INFO) << "Physical device: " << physicalDeviceProperties.deviceName;
+}
+
+void sandbox::Device::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
+								   VkBuffer & buffer, VkDeviceMemory & bufferMemory) const
+{
+	VkBufferCreateInfo bufferInfo = { };
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.size = size;
+	bufferInfo.usage = usage;
+	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create vertex buffer");
+	}
+
+	VkMemoryRequirements memoryRequirements = { };
+	vkGetBufferMemoryRequirements(device, buffer, &memoryRequirements);
+
+	VkMemoryAllocateInfo allocateInfo { };
+	allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocateInfo.allocationSize = memoryRequirements.size;
+	allocateInfo.memoryTypeIndex = memoryProperties.FindMemoryType(memoryRequirements.memoryTypeBits, properties);
+
+	if (vkAllocateMemory(device, &allocateInfo, nullptr, &bufferMemory) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to allocate vertex buffer memory");
+	}
+
+	if (vkBindBufferMemory(device, buffer, bufferMemory, 0) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to bind buffer memory");
+	}
 }

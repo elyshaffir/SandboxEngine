@@ -20,7 +20,14 @@ int main(int argc, char * argv[])
 	WindowConfigurationInfo windowConfigurationInfo = {800, 500, "Good job, me!"};
 	GraphicsPipelineConfigurationInfo pipelineConfigurationInfo({800, 500}, defaultShaders);
 
-	sandbox::Renderer renderer(windowConfigurationInfo, pipelineConfigurationInfo);
+	std::vector<Vertex> vertices = {
+			{{0.0f, -0.5f}},
+			{{0.5f, 0.5f}},
+			{{-0.5f, 0.5f}}
+	};
+	auto model = Model(vertices);
+
+	sandbox::Renderer renderer(windowConfigurationInfo, pipelineConfigurationInfo, model);
 
 	while (!renderer.ShouldClose())
 	{

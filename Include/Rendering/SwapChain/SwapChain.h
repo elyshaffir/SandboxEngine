@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Rendering/Device/DeviceMemoryProperties.h>
 #include <Rendering/SwapChain/SwapChainSupport.h>
 
 #include <vector>
@@ -16,15 +17,14 @@ namespace sandbox
 
 		SwapChain() = default;
 
-		SwapChain(const SwapChainSupport & supportDetails, VkPhysicalDevice physicalDevice,
-				  VkDevice device, VkSurfaceKHR surface, uint32_t graphicsFamilyIndex,
-				  uint32_t presentFamilyIndex);
+		SwapChain(const SwapChainSupport & supportDetails, const DeviceMemoryProperties & deviceMemoryProperties,
+				  VkDevice device, VkSurfaceKHR surface, uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex);
 
 		void Destroy(VkDevice device);
 
 		VkResult AcquireNextImage(VkDevice device, uint32_t * imageIndex);
 
-		VkResult SubmitCommandBuffers(VkDevice device, const VkCommandBuffer * buffers, uint32_t * imageIndex,
+		VkResult SubmitCommandBuffers(VkDevice device, const VkCommandBuffer * buffers, const uint32_t * imageIndex,
 									  VkQueue graphicsQueue,
 									  VkQueue presentQueue);
 
@@ -50,7 +50,7 @@ namespace sandbox
 		void CreateRenderPass(const SwapChainSupport & supportDetails, VkDevice device);
 
 		void CreateDepthResources(const SwapChainSupport & supportDetails, VkDevice device,
-								  VkPhysicalDevice physicalDevice);
+								  const DeviceMemoryProperties & deviceMemoryProperties);
 
 		void CreateFramebuffers(const SwapChainSupport & supportDetails, VkDevice device);
 

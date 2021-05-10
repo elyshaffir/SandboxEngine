@@ -1,12 +1,12 @@
 #pragma once
 
+#include <Rendering/Device/DeviceMemoryProperties.h>
 #include <Rendering/SwapChain/SwapChainSupport.h>
 #include <Rendering/Queue/GraphicsQueue.h>
 #include <Rendering/Queue/PresentQueue.h>
 #include <Rendering/SwapChain/SwapChain.h>
 
 #include <array>
-#include <vulkan/vulkan.h>
 #include <set>
 
 namespace sandbox
@@ -22,21 +22,27 @@ namespace sandbox
 
 		void Destroy();
 
-		void CreateLogicalDevice(const std::set<uint32_t>& queueFamilies);
+		void CreateLogicalDevice(const std::set<uint32_t> & queueFamilies);
 
 		VkRenderPass GetRenderPass() const;
 
-		void RecordRenderPass(VkPipeline pipeline);
+		void RecordRenderPass(VkPipeline pipeline, Model & model);
+
+		void AllocateVertexBuffer(VertexBuffer & vertexBuffer);
 
 		void DrawFrame();
 
 	private:
 		VkPhysicalDevice physicalDevice;
+		DeviceMemoryProperties memoryProperties;
 		SwapChainSupport swapChainSupport;
 		GraphicsQueue graphicsQueue;
 		PresentQueue presentQueue;
 		SwapChain swapChain;
 
 		void PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent);
+
+		void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
+						  VkBuffer & buffer, VkDeviceMemory & bufferMemory) const;
 	};
 }

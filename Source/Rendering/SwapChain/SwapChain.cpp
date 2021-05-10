@@ -3,23 +3,7 @@
 #include <stdexcept>
 #include <array>
 
-static uint32_t GetDeviceMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter,
-									VkMemoryPropertyFlags properties)
-{
-	VkPhysicalDeviceMemoryProperties memoryProperties = { };
-	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
-	for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++)
-	{
-		if ((typeFilter & (1 << i)) && (memoryProperties.memoryTypes[i].propertyFlags & properties) == properties)
-		{
-			return i;
-		}
-	}
-
-	throw std::runtime_error("Failed to find suitable memory type");
-}
-
-static void CreateImageWithInfo(VkDevice device, VkPhysicalDevice physicalDevice,
+static void CreateImageWithInfo(VkDevice device, const sandbox::DeviceMemoryProperties & deviceMemoryProperties,
 								const VkImageCreateInfo & imageInfo, VkMemoryPropertyFlags properties, VkImage & image,
 								VkDeviceMemory & imageMemory)
 {
@@ -34,7 +18,7 @@ static void CreateImageWithInfo(VkDevice device, VkPhysicalDevice physicalDevice
 	VkMemoryAllocateInfo allocInfo = { };
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = memoryRequirements.size;
-	allocInfo.memoryTypeIndex = GetDeviceMemoryType(physicalDevice, memoryRequirements.memoryTypeBits, properties);
+	allocInfo.memoryTypeIndex = deviceMemoryProperties.FindMemoryType(memoryRequirements.memoryTypeBits, properties);
 
 	if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
 	{
@@ -47,7 +31,8 @@ static void CreateImageWithInfo(VkDevice device, VkPhysicalDevice physicalDevice
 	}
 }
 
-sandbox::SwapChain::SwapChain(const SwapChainSupport & supportDetails, VkPhysicalDevice physicalDevice,
+sandbox::SwapChain::SwapChain(const SwapChainSupport & supportDetails,
+							  const DeviceMemoryProperties & deviceMemoryProperties,
 							  VkDevice device, VkSurfaceKHR surface, uint32_t graphicsFamilyIndex,
 							  uint32_t presentFamilyIndex)
 		: swapChain(), frameIndex(), renderPass()
@@ -55,7 +40,7 @@ sandbox::SwapChain::SwapChain(const SwapChainSupport & supportDetails, VkPhysica
 	Create(supportDetails, device, surface, graphicsFamilyIndex, presentFamilyIndex);
 	CreateImageViews(supportDetails, device);
 	CreateRenderPass(supportDetails, device);
-	CreateDepthResources(supportDetails, device, physicalDevice);
+	CreateDepthResources(supportDetails, device, deviceMemoryProperties);
 	CreateFramebuffers(supportDetails, device);
 	CreateSyncObjects(device);
 }
@@ -104,7 +89,8 @@ VkResult sandbox::SwapChain::AcquireNextImage(VkDevice device, uint32_t * imageI
 }
 
 VkResult sandbox::SwapChain::SubmitCommandBuffers(VkDevice device, const VkCommandBuffer * buffers,
-												  uint32_t * imageIndex, VkQueue graphicsQueue, VkQueue presentQueue)
+												  const uint32_t * imageIndex, VkQueue graphicsQueue,
+												  VkQueue presentQueue)
 {
 	if (imagesInFlight[*imageIndex] != VK_NULL_HANDLE)
 	{
@@ -268,7 +254,7 @@ void sandbox::SwapChain::CreateRenderPass(const SwapChainSupport & supportDetail
 }
 
 void sandbox::SwapChain::CreateDepthResources(const SwapChainSupport & supportDetails, VkDevice device,
-											  VkPhysicalDevice physicalDevice)
+											  const DeviceMemoryProperties & deviceMemoryProperties)
 {
 	depthImages.resize(images.size());
 	depthImageMemories.resize(images.size());
@@ -289,8 +275,8 @@ void sandbox::SwapChain::CreateDepthResources(const SwapChainSupport & supportDe
 		depthImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		depthImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		CreateImageWithInfo(device, physicalDevice, depthImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImages[i],
-							depthImageMemories[i]);
+		CreateImageWithInfo(device, deviceMemoryProperties, depthImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+							depthImages[i], depthImageMemories[i]);
 
 		VkImageViewCreateInfo depthImageViewInfo = { };
 		depthImageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
