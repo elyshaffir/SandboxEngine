@@ -15,14 +15,15 @@ namespace sandbox
 	{
 	public:
 		Renderer(const WindowConfigurationInfo & windowConfigurationInfo,
-				 const GraphicsPipelineConfigurationInfo & pipelineConfigurationInfo,
-				 Model & model);
+				 const GraphicsShaderPaths & graphicsShaderPaths, Model & model);
 
 		~Renderer();
 
 		bool ShouldClose();
 
 		void DrawFrame();
+
+		void RecreateSwapChain();
 
 		void WaitIdle() const;
 
@@ -31,6 +32,7 @@ namespace sandbox
 		Window window;
 		Surface surface;
 		Device device;
+		const GraphicsShaderPaths & graphicsShaderPaths;
 		GraphicsPipeline pipeline;
 		uint32_t currentFrame;
 		Model & model;

@@ -19,21 +19,25 @@ namespace sandbox
 	{
 	public:
 		GLFWwindow * window;
+		VkExtent2D extent;
 
 		explicit Window(const WindowConfigurationInfo & configurationInfo);
 
 		~Window();
 
-		bool ShouldClose();
+		bool ShouldClose() const;
 
-		VkExtent2D GenerateExtent();
+		bool WasResized() const {return resized;}
+
+		void ResetResized() {resized = false;}
 
 	private:
 		inline static bool initialized = false;
 
-		const uint32_t width;
-		const uint32_t height;
+		static void ResizeCallback(GLFWwindow * window, int width, int height);
+
 		std::string title;
+		bool resized = false;
 
 		void Create();
 	};

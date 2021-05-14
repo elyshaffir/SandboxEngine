@@ -26,11 +26,16 @@ namespace sandbox
 
 		VkRenderPass GetRenderPass() const;
 
-		void RecordRenderPass(VkPipeline pipeline, Model & model);
-
 		void AllocateVertexBuffer(VertexBuffer & vertexBuffer);
 
-		void DrawFrame();
+		/*
+		 * Draws a frame and checks if the swap chain needs to be recreated.
+		 *
+		 * Returns true if the swap chain does not need to be recreated, false otherwise.
+		 */
+		bool DrawFrame(VkPipeline pipeline, const Model & model);
+
+		void RecreateSwapChain(VkSurfaceKHR surface, VkExtent2D windowExtent);
 
 	private:
 		VkPhysicalDevice physicalDevice;

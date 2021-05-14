@@ -12,8 +12,8 @@ namespace sandbox
 
 		void Create(VkDevice device, uint32_t imageCount);
 
-		void RecordRenderPass(VkRenderPass renderPass, const std::vector<VkFramebuffer> & framebuffers,
-							  VkExtent2D chosenExtent, VkPipeline pipeline, Model & model);
+		void RecordCommandBuffers(VkRenderPass renderPass, size_t imageIndex, VkFramebuffer framebuffer,
+								  VkExtent2D chosenExtent, VkPipeline pipeline, const Model & model);
 
 		VkCommandBuffer * GetCommandBuffer(uint32_t index);
 	private:

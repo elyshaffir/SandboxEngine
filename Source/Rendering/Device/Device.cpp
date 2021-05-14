@@ -95,12 +95,6 @@ VkRenderPass sandbox::Device::GetRenderPass() const
 	return swapChain.renderPass;
 }
 
-void sandbox::Device::RecordRenderPass(VkPipeline pipeline, Model & model)
-{
-	graphicsQueue.RecordRenderPass(swapChain.renderPass, swapChain.framebuffers, swapChainSupport.chosenExtent,
-								   pipeline, model);
-}
-
 void sandbox::Device::AllocateVertexBuffer(VertexBuffer & vertexBuffer)
 {
 	BufferAllocationData allocationData = vertexBuffer.GenerateAllocationData();
@@ -114,22 +108,42 @@ void sandbox::Device::AllocateVertexBuffer(VertexBuffer & vertexBuffer)
 	vkUnmapMemory(device, allocationData.memory);
 }
 
-void sandbox::Device::DrawFrame()
+bool sandbox::Device::DrawFrame(VkPipeline pipeline, const Model & model)
 {
 	uint32_t imageIndex = 0;
 	VkResult result = swapChain.AcquireNextImage(device, &imageIndex);
+
+	if (result == VK_ERROR_OUT_OF_DATE_KHR)
+	{
+		return false;
+	}
 
 	if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
 	{
 		throw std::runtime_error("Failed to acquire swap chain image");
 	}
 
+	graphicsQueue.RecordCommandBuffers(swapChain.renderPass, imageIndex, swapChain.framebuffers[imageIndex],
+									   swapChainSupport.chosenExtent, pipeline, model);
 	result = swapChain.SubmitCommandBuffers(device, graphicsQueue.GetCommandBuffer(imageIndex), &imageIndex,
 											graphicsQueue.queue, presentQueue.queue);
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+	{
+		return false;
+	}
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to present swap chain image");
 	}
+	return true;
+}
+
+void sandbox::Device::RecreateSwapChain(VkSurfaceKHR surface, VkExtent2D windowExtent)
+{
+	swapChainSupport = SwapChainSupport(physicalDevice, surface, windowExtent);
+	swapChain.Destroy(device);
+	swapChain = SwapChain(swapChainSupport, memoryProperties, device, surface, graphicsQueue.family,
+						  presentQueue.family);
 }
 
 void sandbox::Device::PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent)

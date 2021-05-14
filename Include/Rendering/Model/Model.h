@@ -13,7 +13,7 @@ namespace sandbox
 
 		void Destroy(VkDevice device);
 
-		void Bind(VkCommandBuffer commandBuffer);
+		void Bind(VkCommandBuffer commandBuffer) const;
 
 		void Draw(VkCommandBuffer commandBuffer) const;
 

@@ -9,7 +9,7 @@ void sandbox::Model::Destroy(VkDevice device)
 	vertexBuffer.Destroy(device);
 }
 
-void sandbox::Model::Bind(VkCommandBuffer commandBuffer)
+void sandbox::Model::Bind(VkCommandBuffer commandBuffer) const
 {
 	VkBuffer buffers[] = {vertexBuffer.buffer};
 	VkDeviceSize offsets[] = {0};

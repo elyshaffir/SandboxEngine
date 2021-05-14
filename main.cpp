@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include <Rendering/Window/Window.h>
 #include <Rendering/GraphicsPipeline/GraphicsPipeline.h>
 #include <Engine/Engine.h>
@@ -17,7 +15,6 @@ int main(int argc, char * argv[])
 	};
 
 	WindowConfigurationInfo windowConfigurationInfo = {800, 500, "Good job, me!"};
-	GraphicsPipelineConfigurationInfo pipelineConfigurationInfo({800, 500}, defaultShaders);
 
 	std::vector<Vertex> vertices = {
 			{{0.0f,  -0.5f}, {1.0f, 0.0f, 0.0f}},
@@ -26,7 +23,7 @@ int main(int argc, char * argv[])
 	};
 	auto model = Model(vertices);
 
-	sandbox::Renderer renderer(windowConfigurationInfo, pipelineConfigurationInfo, model);
+	sandbox::Renderer renderer(windowConfigurationInfo, defaultShaders, model);
 
 	while (!renderer.ShouldClose())
 	{
