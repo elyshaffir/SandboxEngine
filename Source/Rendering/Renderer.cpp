@@ -1,5 +1,7 @@
 #include <Rendering/Renderer.h>
 
+#include <glog/logging.h>
+
 sandbox::Renderer::Renderer(const WindowConfigurationInfo & windowConfigurationInfo,
 							const GraphicsPipelineConfigurationInfo & pipelineConfigurationInfo,
 							Model & model)
@@ -28,6 +30,10 @@ bool sandbox::Renderer::ShouldClose()
 
 void sandbox::Renderer::DrawFrame()
 {
+	if (currentFrame % 1000 == 0)
+	{
+		LOG(INFO) << "1000 frame application update!";
+	}
 	currentFrame++;
 	device.DrawFrame();
 }

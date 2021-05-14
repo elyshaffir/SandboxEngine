@@ -1,6 +1,5 @@
 #include <iostream>
 
-#include <glog/logging.h>
 #include <Rendering/Window/Window.h>
 #include <Rendering/GraphicsPipeline/GraphicsPipeline.h>
 #include <Engine/Engine.h>
@@ -21,9 +20,9 @@ int main(int argc, char * argv[])
 	GraphicsPipelineConfigurationInfo pipelineConfigurationInfo({800, 500}, defaultShaders);
 
 	std::vector<Vertex> vertices = {
-			{{0.0f, -0.5f}},
-			{{0.5f, 0.5f}},
-			{{-0.5f, 0.5f}}
+			{{0.0f,  -0.5f}, {1.0f, 0.0f, 0.0f}},
+			{{0.5f,  0.5f},  {0.0f, 1.0f, 0.0f}},
+			{{-0.5f, 0.5f},  {0.0f, 0.0f, 1.0f}}
 	};
 	auto model = Model(vertices);
 
@@ -31,7 +30,6 @@ int main(int argc, char * argv[])
 
 	while (!renderer.ShouldClose())
 	{
-		LOG(INFO) << "Application update!";
 		Engine::Update();
 		renderer.DrawFrame();
 	}
