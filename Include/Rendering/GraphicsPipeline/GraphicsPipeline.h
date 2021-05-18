@@ -12,16 +12,14 @@ namespace sandbox
 
 		GraphicsPipeline() = default;
 
-		GraphicsPipeline(VkDevice device, VkExtent2D windowExtent, const GraphicsShaderPaths & shaderPaths,
+		GraphicsPipeline(VkDevice device, const GraphicsShaderPaths & shaderPaths,
 						 VkRenderPass renderPass);
 
 		void Destroy(VkDevice device);
 
 	private:
-		GraphicsShaderPaths shaderPaths;
-		VkViewport viewport;
-		VkRect2D scissor;
 		VkPipelineInputAssemblyStateCreateInfo inputAssemblyCreateInfo;
+		VkPipelineViewportStateCreateInfo viewportCreateInfo;
 		VkPipelineRasterizationStateCreateInfo rasterizationCreateInfo;
 		VkPipelineMultisampleStateCreateInfo multisampleCreateInfo;
 		VkPipelineColorBlendAttachmentState colorBlendAttachment;
@@ -31,8 +29,10 @@ namespace sandbox
 		uint32_t subpass;
 		GraphicsShaderModules shaderModules;
 		VkPipelineLayout layout;
+		std::vector<VkDynamicState> dynamicStateEnables;
+		VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo;
 
-		void Create(VkDevice device, VkExtent2D windowExtent, VkRenderPass renderPass);
+		void Create(VkDevice device, VkRenderPass renderPass);
 
 		void CreateLayout(VkDevice device);
 	};

@@ -48,6 +48,17 @@ void sandbox::GraphicsQueue::RecordCommandBuffers(VkRenderPass renderPass, size_
 	renderPassBeginInfo.pClearValues = clearValues.data();
 
 	vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	VkViewport viewport = { };
+	viewport.width = static_cast<float>(chosenExtent.width);
+	viewport.height = static_cast<float>(chosenExtent.height);
+	viewport.maxDepth = 1.0f;
+
+	VkRect2D scissor = {{}, chosenExtent};
+
+	vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &viewport);
+	vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &scissor);
+
 	vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 	model.Bind(commandBuffers[imageIndex]);
 	model.Draw(commandBuffers[imageIndex]);

@@ -2,15 +2,14 @@
 
 #include <stdexcept>
 
-sandbox::GraphicsPipeline::GraphicsPipeline(VkDevice device, VkExtent2D windowExtent,
-											const GraphicsShaderPaths & shaderPaths,
+sandbox::GraphicsPipeline::GraphicsPipeline(VkDevice device, const GraphicsShaderPaths & shaderPaths,
 											VkRenderPass renderPass) :
-		pipeline(), viewport(), scissor(), inputAssemblyCreateInfo(), rasterizationCreateInfo(),
-		multisampleCreateInfo(), colorBlendAttachment(), colorBlendCreateInfo(), depthStencilCreateInfo(),
-		pipelineLayout(), subpass(), shaderModules(device, shaderPaths), layout()
+		pipeline(),  inputAssemblyCreateInfo(), viewportCreateInfo(), rasterizationCreateInfo(), multisampleCreateInfo(),
+		colorBlendAttachment(), colorBlendCreateInfo(), depthStencilCreateInfo(), pipelineLayout(), subpass(),
+		shaderModules(device, shaderPaths), layout(), dynamicStateCreateInfo()
 {
 	CreateLayout(device);
-	Create(device, windowExtent, renderPass);
+	Create(device, renderPass);
 }
 
 void sandbox::GraphicsPipeline::Destroy(VkDevice device)
@@ -20,19 +19,15 @@ void sandbox::GraphicsPipeline::Destroy(VkDevice device)
 	vkDestroyPipeline(device, pipeline, nullptr);
 }
 
-void sandbox::GraphicsPipeline::Create(VkDevice device, VkExtent2D windowExtent, VkRenderPass renderPass)
+void sandbox::GraphicsPipeline::Create(VkDevice device, VkRenderPass renderPass)
 {
 	inputAssemblyCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	inputAssemblyCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	inputAssemblyCreateInfo.primitiveRestartEnable = VK_FALSE;
 
-	viewport.width = static_cast<float>(windowExtent.width);
-	viewport.height = static_cast<float>(windowExtent.height);
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-
-	scissor.offset = {0, 0};
-	scissor.extent = windowExtent;
+	viewportCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	viewportCreateInfo.viewportCount = 1;
+	viewportCreateInfo.scissorCount = 1;
 
 	rasterizationCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	rasterizationCreateInfo.depthClampEnable = VK_FALSE;
@@ -64,6 +59,11 @@ void sandbox::GraphicsPipeline::Create(VkDevice device, VkExtent2D windowExtent,
 	depthStencilCreateInfo.depthBoundsTestEnable = VK_FALSE;
 	depthStencilCreateInfo.stencilTestEnable = VK_FALSE;
 
+	dynamicStateEnables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+	dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamicStateCreateInfo.pDynamicStates = dynamicStateEnables.data();
+	dynamicStateCreateInfo.dynamicStateCount = static_cast<uint32_t>(dynamicStateEnables.size());
+
 	std::vector<VkVertexInputBindingDescription> bindingDescriptions = Vertex::GetBindingDescriptions();
 	std::vector<VkVertexInputAttributeDescription> attributeDescriptions = Vertex::GetAttributeDescriptions();
 	VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo = { };
@@ -72,13 +72,6 @@ void sandbox::GraphicsPipeline::Create(VkDevice device, VkExtent2D windowExtent,
 	vertexInputCreateInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescriptions.size());
 	vertexInputCreateInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 	vertexInputCreateInfo.pVertexBindingDescriptions = bindingDescriptions.data();
-
-	VkPipelineViewportStateCreateInfo viewportCreateInfo = { };
-	viewportCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-	viewportCreateInfo.viewportCount = 1;
-	viewportCreateInfo.scissorCount = 1;
-	viewportCreateInfo.pViewports = &viewport;
-	viewportCreateInfo.pScissors = &scissor;
 
 	VkGraphicsPipelineCreateInfo createInfo = { };
 	createInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -91,6 +84,7 @@ void sandbox::GraphicsPipeline::Create(VkDevice device, VkExtent2D windowExtent,
 	createInfo.pMultisampleState = &multisampleCreateInfo;
 	createInfo.pColorBlendState = &colorBlendCreateInfo;
 	createInfo.pDepthStencilState = &depthStencilCreateInfo;
+	createInfo.pDynamicState = &dynamicStateCreateInfo;
 	createInfo.layout = pipelineLayout;
 	createInfo.subpass = subpass;
 	createInfo.renderPass = renderPass;
