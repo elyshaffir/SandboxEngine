@@ -55,7 +55,7 @@ void sandbox::Device::Destroy()
 {
 	graphicsQueue.Destroy(device);
 	presentQueue.Destroy(device);
-	swapChain.Destroy(device);
+	swapChain.Destroy(device, false);
 	vkDestroyDevice(device, nullptr);
 }
 
@@ -140,10 +140,16 @@ bool sandbox::Device::DrawFrame(VkPipeline pipeline, const Model & model)
 
 void sandbox::Device::RecreateSwapChain(VkSurfaceKHR surface, VkExtent2D windowExtent)
 {
+	uint32_t oldImageCount = swapChainSupport.imageCount;
 	swapChainSupport = SwapChainSupport(physicalDevice, surface, windowExtent);
-	swapChain.Destroy(device);
+	swapChain.Destroy(device, true);
 	swapChain = SwapChain(swapChainSupport, memoryProperties, device, surface, graphicsQueue.family,
-						  presentQueue.family);
+						  presentQueue.family, swapChain.swapChain);
+	if (swapChainSupport.imageCount != oldImageCount)
+	{
+		graphicsQueue.FreeCommandBuffers(device);
+		graphicsQueue.CreateCommandBuffers(device, swapChainSupport.imageCount);
+	}
 }
 
 void sandbox::Device::PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent)

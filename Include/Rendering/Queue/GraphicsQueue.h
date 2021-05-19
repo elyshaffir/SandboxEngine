@@ -16,7 +16,6 @@ namespace sandbox
 								  VkExtent2D chosenExtent, VkPipeline pipeline, const Model & model);
 
 		VkCommandBuffer * GetCommandBuffer(uint32_t index);
-	private:
 
 		void CreateCommandBuffers(VkDevice device, uint32_t imageCount);
 	};

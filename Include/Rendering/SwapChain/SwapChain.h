@@ -12,15 +12,17 @@ namespace sandbox
 	class SwapChain
 	{
 	public:
+		VkSwapchainKHR swapChain;
 		VkRenderPass renderPass;
 		std::vector<VkFramebuffer> framebuffers;
 
 		SwapChain() = default;
 
 		SwapChain(const SwapChainSupport & supportDetails, const DeviceMemoryProperties & deviceMemoryProperties,
-				  VkDevice device, VkSurfaceKHR surface, uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex);
+				  VkDevice device, VkSurfaceKHR surface, uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex,
+				  VkSwapchainKHR oldSwapChain = VK_NULL_HANDLE);
 
-		void Destroy(VkDevice device);
+		void Destroy(VkDevice device, bool recycle);
 
 		VkResult AcquireNextImage(VkDevice device, uint32_t * imageIndex);
 
@@ -30,7 +32,6 @@ namespace sandbox
 
 	private:
 		static constexpr size_t MAX_FRAMES_IN_FLIGHT = 2;
-		VkSwapchainKHR swapChain;
 		size_t frameIndex;
 		std::vector<VkImage> depthImages;
 		std::vector<VkDeviceMemory> depthImageMemories;
@@ -43,7 +44,8 @@ namespace sandbox
 		std::vector<VkFence> imagesInFlight;
 
 		void Create(const SwapChainSupport & supportDetails, VkDevice device, VkSurfaceKHR surface,
-					uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex);
+					uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex,
+					VkSwapchainKHR oldSwapChain = VK_NULL_HANDLE);
 
 		void CreateImageViews(const SwapChainSupport & supportDetails, VkDevice device);
 

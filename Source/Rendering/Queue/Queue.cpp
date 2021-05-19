@@ -2,6 +2,12 @@
 
 #include <stdexcept>
 
+void sandbox::Queue::FreeCommandBuffers(VkDevice device)
+{
+	vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
+	commandBuffers.clear();
+}
+
 void sandbox::Queue::Destroy(VkDevice device) const
 {
 	vkDestroyCommandPool(device, commandPool, nullptr);
@@ -18,14 +24,14 @@ std::vector<VkQueueFamilyProperties> sandbox::Queue::GetQueueFamilies(VkPhysical
 	return queueFamilies;
 }
 
+sandbox::Queue::Queue() : queue(), family(), commandPool()
+{
+}
+
 void sandbox::Queue::Create(VkDevice device)
 {
 	vkGetDeviceQueue(device, family, 0, &queue);
 	CreateCommandPool(device);
-}
-
-sandbox::Queue::Queue() : queue(), family(), commandPool()
-{
 }
 
 void sandbox::Queue::CreateCommandPool(VkDevice device)

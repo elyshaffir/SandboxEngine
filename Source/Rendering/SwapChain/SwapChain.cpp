@@ -34,10 +34,10 @@ static void CreateImageWithInfo(VkDevice device, const sandbox::DeviceMemoryProp
 sandbox::SwapChain::SwapChain(const SwapChainSupport & supportDetails,
 							  const DeviceMemoryProperties & deviceMemoryProperties,
 							  VkDevice device, VkSurfaceKHR surface, uint32_t graphicsFamilyIndex,
-							  uint32_t presentFamilyIndex)
+							  uint32_t presentFamilyIndex, VkSwapchainKHR oldSwapChain)
 		: swapChain(), frameIndex(), renderPass()
 {
-	Create(supportDetails, device, surface, graphicsFamilyIndex, presentFamilyIndex);
+	Create(supportDetails, device, surface, graphicsFamilyIndex, presentFamilyIndex, oldSwapChain);
 	CreateImageViews(supportDetails, device);
 	CreateRenderPass(supportDetails, device);
 	CreateDepthResources(supportDetails, device, deviceMemoryProperties);
@@ -45,7 +45,7 @@ sandbox::SwapChain::SwapChain(const SwapChainSupport & supportDetails,
 	CreateSyncObjects(device);
 }
 
-void sandbox::SwapChain::Destroy(VkDevice device)
+void sandbox::SwapChain::Destroy(VkDevice device, bool recycle)
 {
 	for (VkImageView imageView : imageViews)
 	{
@@ -54,7 +54,10 @@ void sandbox::SwapChain::Destroy(VkDevice device)
 
 	imageViews.clear();
 
-	vkDestroySwapchainKHR(device, swapChain, nullptr);
+	if (!recycle)
+	{
+		vkDestroySwapchainKHR(device, swapChain, nullptr);
+	}
 
 	for (size_t i = 0; i < depthImages.size(); i++)
 	{
@@ -140,7 +143,7 @@ VkResult sandbox::SwapChain::SubmitCommandBuffers(VkDevice device, const VkComma
 }
 
 void sandbox::SwapChain::Create(const SwapChainSupport & supportDetails, VkDevice device, VkSurfaceKHR surface,
-								uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex)
+								uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex, VkSwapchainKHR oldSwapChain)
 {
 	VkSwapchainCreateInfoKHR createInfo = { };
 	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -162,6 +165,7 @@ void sandbox::SwapChain::Create(const SwapChainSupport & supportDetails, VkDevic
 
 	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 	createInfo.clipped = VK_TRUE;
+	createInfo.oldSwapchain = oldSwapChain;
 
 	if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS)
 	{
