@@ -13,7 +13,8 @@ namespace sandbox
 		void Create(VkDevice device, uint32_t imageCount);
 
 		void RecordCommandBuffers(VkRenderPass renderPass, size_t imageIndex, VkFramebuffer framebuffer,
-								  VkExtent2D chosenExtent, VkPipeline pipeline, const Model & model);
+								  VkExtent2D chosenExtent, VkPipeline pipeline,
+								  VkPipelineLayout pipelineLayout, const Model & model);
 
 		VkCommandBuffer * GetCommandBuffer(uint32_t index);
 

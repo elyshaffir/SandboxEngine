@@ -33,7 +33,7 @@ namespace sandbox
 		 *
 		 * Returns true if the swap chain does not need to be recreated, false otherwise.
 		 */
-		bool DrawFrame(VkPipeline pipeline, const Model & model);
+		bool DrawFrame(VkPipeline pipeline, VkPipelineLayout pipelineLayout, const Model & model);
 
 		void RecreateSwapChain(VkSurfaceKHR surface, VkExtent2D windowExtent);
 

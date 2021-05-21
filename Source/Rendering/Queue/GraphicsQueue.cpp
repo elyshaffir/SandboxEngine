@@ -1,4 +1,5 @@
 #include <Rendering/Queue/GraphicsQueue.h>
+#include <Rendering/GraphicsPipeline/PushConstantData.h>
 
 #include <stdexcept>
 #include <array>
@@ -25,7 +26,8 @@ void sandbox::GraphicsQueue::Create(VkDevice device, uint32_t imageCount)
 }
 
 void sandbox::GraphicsQueue::RecordCommandBuffers(VkRenderPass renderPass, size_t imageIndex, VkFramebuffer framebuffer,
-												  VkExtent2D chosenExtent, VkPipeline pipeline, const Model & model)
+												  VkExtent2D chosenExtent, VkPipeline pipeline,
+												  VkPipelineLayout pipelineLayout, const Model & model)
 {
 	VkCommandBufferBeginInfo beginInfo = { };
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -54,14 +56,25 @@ void sandbox::GraphicsQueue::RecordCommandBuffers(VkRenderPass renderPass, size_
 	viewport.height = static_cast<float>(chosenExtent.height);
 	viewport.maxDepth = 1.0f;
 
-	VkRect2D scissor = {{}, chosenExtent};
+	VkRect2D scissor = {{ }, chosenExtent};
 
 	vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &viewport);
 	vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &scissor);
 
 	vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 	model.Bind(commandBuffers[imageIndex]);
-	model.Draw(commandBuffers[imageIndex]);
+
+	for (size_t modelIndex = 0; modelIndex < 4; modelIndex++)
+	{
+		PushConstantData pushConstantData = { };
+		pushConstantData.offset = {0.0f, -0.4f + static_cast<float>(modelIndex) * 0.25f};
+		pushConstantData.color = {0.0f, 0.0f, 0.2f * (static_cast<float>(modelIndex) + 1)};
+		vkCmdPushConstants(commandBuffers[imageIndex], pipelineLayout,
+						   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstantData),
+						   &pushConstantData);
+		model.Draw(commandBuffers[imageIndex]);
+	}
+
 	vkCmdEndRenderPass(commandBuffers[imageIndex]);
 	if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS)
 	{

@@ -32,6 +32,7 @@ namespace sandbox
 
 	private:
 		static constexpr size_t MAX_FRAMES_IN_FLIGHT = 2;
+
 		size_t frameIndex;
 		std::vector<VkImage> depthImages;
 		std::vector<VkDeviceMemory> depthImageMemories;

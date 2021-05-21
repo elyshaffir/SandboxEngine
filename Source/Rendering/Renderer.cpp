@@ -33,7 +33,7 @@ void sandbox::Renderer::DrawFrame()
 		LOG(INFO) << "1000 frame application update!";
 	}
 	currentFrame++;
-	if (!device.DrawFrame(pipeline.pipeline, model) || window.WasResized())
+	if (!device.DrawFrame(pipeline.pipeline, pipeline.layout, model) || window.WasResized())
 	{
 		window.ResetResized();
 		RecreateSwapChain();

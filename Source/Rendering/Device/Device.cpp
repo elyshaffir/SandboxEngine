@@ -108,7 +108,7 @@ void sandbox::Device::AllocateVertexBuffer(VertexBuffer & vertexBuffer)
 	vkUnmapMemory(device, allocationData.memory);
 }
 
-bool sandbox::Device::DrawFrame(VkPipeline pipeline, const Model & model)
+bool sandbox::Device::DrawFrame(VkPipeline pipeline, VkPipelineLayout pipelineLayout, const Model & model)
 {
 	uint32_t imageIndex = 0;
 	VkResult result = swapChain.AcquireNextImage(device, &imageIndex);
@@ -124,7 +124,7 @@ bool sandbox::Device::DrawFrame(VkPipeline pipeline, const Model & model)
 	}
 
 	graphicsQueue.RecordCommandBuffers(swapChain.renderPass, imageIndex, swapChain.framebuffers[imageIndex],
-									   swapChainSupport.chosenExtent, pipeline, model);
+									   swapChainSupport.chosenExtent, pipeline, pipelineLayout, model);
 	result = swapChain.SubmitCommandBuffers(device, graphicsQueue.GetCommandBuffer(imageIndex), &imageIndex,
 											graphicsQueue.queue, presentQueue.queue);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
