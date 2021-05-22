@@ -17,13 +17,12 @@ namespace sandbox
 		GraphicsPipeline(VkDevice device, const GraphicsShaderPaths & shaderPaths,
 						 VkRenderPass renderPass);
 
-		void Destroy(VkDevice device);
+		void Destroy(VkDevice device) const;
 
 	private:
 		uint32_t subpass;
-		GraphicsShaderModules shaderModules;
 
-		void Create(VkDevice device, VkRenderPass renderPass);
+		void Create(VkDevice device, VkRenderPass renderPass, const GraphicsShaderPaths & shaderPaths);
 
 		void CreateLayout(VkDevice device);
 	};

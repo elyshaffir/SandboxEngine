@@ -4,21 +4,21 @@
 
 sandbox::GraphicsPipeline::GraphicsPipeline(VkDevice device, const GraphicsShaderPaths & shaderPaths,
 											VkRenderPass renderPass) :
-		pipeline(), subpass(), shaderModules(device, shaderPaths), layout()
+		pipeline(), subpass(), layout()
 {
 	CreateLayout(device);
-	Create(device, renderPass);
+	Create(device, renderPass, shaderPaths);
 }
 
-void sandbox::GraphicsPipeline::Destroy(VkDevice device)
+void sandbox::GraphicsPipeline::Destroy(VkDevice device) const
 {
 	vkDestroyPipelineLayout(device, layout, nullptr);
-	shaderModules.Destroy(device);
 	vkDestroyPipeline(device, pipeline, nullptr);
 }
 
-void sandbox::GraphicsPipeline::Create(VkDevice device, VkRenderPass renderPass)
+void sandbox::GraphicsPipeline::Create(VkDevice device, VkRenderPass renderPass, const GraphicsShaderPaths & shaderPaths)
 {
+	GraphicsShaderModules shaderModules = GraphicsShaderModules(device, shaderPaths);
 	VkPipelineInputAssemblyStateCreateInfo inputAssemblyCreateInfo = { };
 	inputAssemblyCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	inputAssemblyCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -100,6 +100,8 @@ void sandbox::GraphicsPipeline::Create(VkDevice device, VkRenderPass renderPass)
 	{
 		throw std::runtime_error("Failed to create graphics pipeline");
 	}
+
+	shaderModules.Destroy(device);
 }
 
 void sandbox::GraphicsPipeline::CreateLayout(VkDevice device)
