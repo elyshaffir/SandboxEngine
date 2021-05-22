@@ -6,7 +6,7 @@ sandbox::Renderer::Renderer(const WindowConfigurationInfo & windowConfigurationI
 							const GraphicsShaderPaths & graphicsShaderPaths, Model & model)
 		: window(windowConfigurationInfo), instance(),
 		  surface(instance.instance, window.window),
-		  device(instance.instance, surface.surface, window.extent),
+		  device(instance.instance, surface.surface, {window.width, window.height}),
 		  pipeline(device.device, graphicsShaderPaths, device.GetRenderPass()), currentFrame(), model(model)
 {
 	device.AllocateVertexBuffer(model.vertexBuffer);
@@ -41,14 +41,9 @@ void sandbox::Renderer::DrawFrame()
 
 void sandbox::Renderer::RecreateSwapChain()
 {
-	VkExtent2D newExtent = window.extent;
-	while (newExtent.width == 0 || newExtent.height == 0)
-	{
-		newExtent = window.extent;
-		glfwWaitEvents();
-	}
+	window.Recreate();
 	WaitIdle();
-	device.RecreateSwapChain(surface.surface, newExtent);
+	device.RecreateSwapChain(surface.surface, {window.width, window.height});
 	pipeline.Recreate(device.device, device.GetRenderPass());
 }
 

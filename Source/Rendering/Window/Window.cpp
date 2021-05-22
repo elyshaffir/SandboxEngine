@@ -2,13 +2,14 @@
 
 void sandbox::Window::ResizeCallback(GLFWwindow * window, int width, int height)
 {
-	auto currentWindow = reinterpret_cast<Window *>(glfwGetWindowUserPointer(window));
+	auto * currentWindow = reinterpret_cast<Window *>(glfwGetWindowUserPointer(window));
 	currentWindow->resized = true;
-	currentWindow->extent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
+	currentWindow->width = static_cast<uint32_t>(width);
+	currentWindow->height = static_cast<uint32_t>(height);
 }
 
 sandbox::Window::Window(const WindowConfigurationInfo & configurationInfo)
-		: window(nullptr), extent({configurationInfo.windowWidth, configurationInfo.windowHeight}),
+		: window(nullptr), width(configurationInfo.windowWidth), height(configurationInfo.windowHeight),
 		  title(configurationInfo.windowTitle)
 {
 	Create();
@@ -24,12 +25,23 @@ bool sandbox::Window::ShouldClose() const
 	return glfwWindowShouldClose(window);
 }
 
+void sandbox::Window::Recreate() const
+{
+	uint32_t newWidth = width;
+	uint32_t newHeight = height;
+	while (newWidth == 0 || newHeight == 0)
+	{
+		newWidth = width;
+		newHeight = height;
+		glfwWaitEvents();
+	}
+}
+
 void sandbox::Window::Create()
 {
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-	window = glfwCreateWindow(static_cast<int>(extent.width), static_cast<int>(extent.height), title.c_str(), nullptr,
-							  nullptr);
+	window = glfwCreateWindow(static_cast<int>(width), static_cast<int>(height), title.c_str(), nullptr, nullptr);
 	glfwSetWindowUserPointer(window, this);
 	glfwSetFramebufferSizeCallback(window, ResizeCallback);
 	glfwDefaultWindowHints();

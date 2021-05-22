@@ -3,7 +3,6 @@
 #include <string>
 #include <memory>
 
-#include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
 
 namespace sandbox
@@ -19,7 +18,8 @@ namespace sandbox
 	{
 	public:
 		GLFWwindow * window;
-		VkExtent2D extent;
+		uint32_t width;
+		uint32_t height;
 
 		explicit Window(const WindowConfigurationInfo & configurationInfo);
 
@@ -30,6 +30,8 @@ namespace sandbox
 		bool WasResized() const {return resized;}
 
 		void ResetResized() {resized = false;}
+
+		void Recreate() const;
 
 	private:
 		inline static bool initialized = false;
