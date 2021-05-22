@@ -3,16 +3,14 @@
 void sandbox::Window::ResizeCallback(GLFWwindow * window, int width, int height)
 {
 	auto * currentWindow = reinterpret_cast<Window *>(glfwGetWindowUserPointer(window));
-	currentWindow->resized = true;
 	currentWindow->width = static_cast<uint32_t>(width);
 	currentWindow->height = static_cast<uint32_t>(height);
 }
 
 sandbox::Window::Window(const WindowConfigurationInfo & configurationInfo)
-		: window(nullptr), width(configurationInfo.windowWidth), height(configurationInfo.windowHeight),
-		  title(configurationInfo.windowTitle)
+		: window(nullptr), width(configurationInfo.windowWidth), height(configurationInfo.windowHeight)
 {
-	Create();
+	Create(configurationInfo.windowTitle);
 }
 
 sandbox::Window::~Window()
@@ -37,7 +35,7 @@ void sandbox::Window::Recreate() const
 	}
 }
 
-void sandbox::Window::Create()
+void sandbox::Window::Create(const std::string & title)
 {
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);

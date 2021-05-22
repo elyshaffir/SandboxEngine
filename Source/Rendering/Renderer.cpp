@@ -32,19 +32,13 @@ void sandbox::Renderer::DrawFrame()
 		LOG(INFO) << "1000 frame application update!";
 	}
 	currentFrame++;
-	if (!device.DrawFrame(pipeline.pipeline, pipeline.layout, model) || window.WasResized())
+	if (!device.DrawFrame(pipeline.pipeline, pipeline.layout, model))
 	{
-		window.ResetResized();
-		RecreateSwapChain();
+		window.Recreate();
+		WaitIdle();
+		device.RecreateSwapChain(surface.surface, {window.width, window.height});
+		pipeline.Recreate(device.device, device.GetRenderPass());
 	}
-}
-
-void sandbox::Renderer::RecreateSwapChain()
-{
-	window.Recreate();
-	WaitIdle();
-	device.RecreateSwapChain(surface.surface, {window.width, window.height});
-	pipeline.Recreate(device.device, device.GetRenderPass());
 }
 
 void sandbox::Renderer::WaitIdle() const

@@ -27,10 +27,6 @@ namespace sandbox
 
 		bool ShouldClose() const;
 
-		bool WasResized() const {return resized;}
-
-		void ResetResized() {resized = false;}
-
 		void Recreate() const;
 
 	private:
@@ -38,9 +34,6 @@ namespace sandbox
 
 		static void ResizeCallback(GLFWwindow * window, int width, int height);
 
-		std::string title;
-		bool resized = false;
-
-		void Create();
+		void Create(const std::string & title);
 	};
 }

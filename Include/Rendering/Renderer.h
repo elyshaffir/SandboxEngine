@@ -23,8 +23,6 @@ namespace sandbox
 
 		void DrawFrame();
 
-		void RecreateSwapChain();
-
 		void WaitIdle() const;
 
 	private:
