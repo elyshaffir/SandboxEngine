@@ -28,13 +28,13 @@ namespace sandbox
 		void WaitIdle() const;
 
 	private:
+		uint32_t currentFrame;
+
 		Instance instance;
 		Window window;
 		Surface surface;
 		Device device;
-		const GraphicsShaderPaths & graphicsShaderPaths;
 		GraphicsPipeline pipeline;
-		uint32_t currentFrame;
 		Model & model;
 	};
 }

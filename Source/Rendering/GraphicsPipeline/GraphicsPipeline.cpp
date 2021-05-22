@@ -1,13 +1,20 @@
 #include <Rendering/GraphicsPipeline/GraphicsPipeline.h>
 
 #include <stdexcept>
+#include <utility>
 
-sandbox::GraphicsPipeline::GraphicsPipeline(VkDevice device, const GraphicsShaderPaths & shaderPaths,
-											VkRenderPass renderPass) :
-		pipeline(), subpass(), layout()
+sandbox::GraphicsPipeline::GraphicsPipeline(VkDevice device, GraphicsShaderPaths shaderPaths, VkRenderPass renderPass) :
+		pipeline(), layout(), subpass(), shaderPaths(std::move(shaderPaths))
 {
 	CreateLayout(device);
-	Create(device, renderPass, shaderPaths);
+	Create(device, renderPass);
+}
+
+void sandbox::GraphicsPipeline::Recreate(VkDevice device, VkRenderPass renderPass)
+{
+	Destroy(device);
+	CreateLayout(device);
+	Create(device, renderPass);
 }
 
 void sandbox::GraphicsPipeline::Destroy(VkDevice device) const
@@ -16,7 +23,7 @@ void sandbox::GraphicsPipeline::Destroy(VkDevice device) const
 	vkDestroyPipeline(device, pipeline, nullptr);
 }
 
-void sandbox::GraphicsPipeline::Create(VkDevice device, VkRenderPass renderPass, const GraphicsShaderPaths & shaderPaths)
+void sandbox::GraphicsPipeline::Create(VkDevice device, VkRenderPass renderPass)
 {
 	GraphicsShaderModules shaderModules = GraphicsShaderModules(device, shaderPaths);
 	VkPipelineInputAssemblyStateCreateInfo inputAssemblyCreateInfo = { };

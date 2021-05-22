@@ -6,10 +6,9 @@ sandbox::Renderer::Renderer(const WindowConfigurationInfo & windowConfigurationI
 							const GraphicsShaderPaths & graphicsShaderPaths, Model & model)
 		: window(windowConfigurationInfo), instance(),
 		  surface(instance.instance, window.window),
-		  device(instance.instance, surface.surface, window.extent), graphicsShaderPaths(graphicsShaderPaths),
-		  pipeline(), currentFrame(), model(model)
+		  device(instance.instance, surface.surface, window.extent),
+		  pipeline(device.device, graphicsShaderPaths, device.GetRenderPass()), currentFrame(), model(model)
 {
-	pipeline = GraphicsPipeline(device.device, graphicsShaderPaths, device.GetRenderPass());
 	device.AllocateVertexBuffer(model.vertexBuffer);
 }
 
@@ -50,8 +49,7 @@ void sandbox::Renderer::RecreateSwapChain()
 	}
 	WaitIdle();
 	device.RecreateSwapChain(surface.surface, newExtent);
-	pipeline.Destroy(device.device);
-	pipeline = GraphicsPipeline(device.device, graphicsShaderPaths, device.GetRenderPass());
+	pipeline.Recreate(device.device, device.GetRenderPass());
 }
 
 void sandbox::Renderer::WaitIdle() const
