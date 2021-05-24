@@ -40,13 +40,15 @@ static VkPhysicalDeviceFeatures GenerateRequiredDeviceFeatures()
 }
 
 sandbox::Device::Device(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent)
-		: physicalDevice(), memoryProperties(), device(), swapChainSupport(), graphicsQueue(), presentQueue()
+		: physicalDevice(), memoryProperties(), device(), swapChainSupport(), graphicsQueue(), presentQueue(),
+		  swapChain(), renderPass()
 {
 	PickPhysicalDevice(instance, surface, windowExtent);
 	memoryProperties = DeviceMemoryProperties(physicalDevice);
 	CreateLogicalDevice({graphicsQueue.family, presentQueue.family});
+	renderPass = RenderPass(swapChainSupport, device);
 	swapChain = SwapChain(swapChainSupport, memoryProperties, device, surface, graphicsQueue.family,
-						  presentQueue.family);
+						  presentQueue.family, renderPass.renderPass);
 	graphicsQueue.Create(device, swapChainSupport.imageCount);
 	presentQueue.Create(device);
 }
@@ -56,6 +58,7 @@ void sandbox::Device::Destroy()
 	graphicsQueue.Destroy(device);
 	presentQueue.Destroy(device);
 	swapChain.Destroy(device, false);
+	renderPass.Destroy(device);
 	vkDestroyDevice(device, nullptr);
 }
 
@@ -90,16 +93,10 @@ void sandbox::Device::CreateLogicalDevice(const std::set<uint32_t> & queueFamili
 	}
 }
 
-VkRenderPass sandbox::Device::GetRenderPass() const
-{
-	return swapChain.renderPass;
-}
-
 void sandbox::Device::AllocateVertexBuffer(VertexBuffer & vertexBuffer)
 {
 	BufferAllocationData allocationData = vertexBuffer.GenerateAllocationData();
-	CreateBuffer(allocationData.size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-				 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, vertexBuffer.buffer,
+	CreateBuffer(allocationData.size, vertexBuffer.buffer,
 				 allocationData.memory);
 
 	void * data = nullptr;
@@ -108,9 +105,8 @@ void sandbox::Device::AllocateVertexBuffer(VertexBuffer & vertexBuffer)
 	vkUnmapMemory(device, allocationData.memory);
 }
 
-bool sandbox::Device::DrawFrame(VkPipeline pipeline, VkPipelineLayout pipelineLayout, const Model & model)
+bool sandbox::Device::PrepareDrawFrame(VkCommandBuffer & frameCommandBuffer, uint32_t & imageIndex)
 {
-	uint32_t imageIndex = 0;
 	VkResult result = swapChain.AcquireNextImage(device, &imageIndex);
 
 	if (result == VK_ERROR_OUT_OF_DATE_KHR)
@@ -123,10 +119,29 @@ bool sandbox::Device::DrawFrame(VkPipeline pipeline, VkPipelineLayout pipelineLa
 		throw std::runtime_error("Failed to acquire swap chain image");
 	}
 
-	graphicsQueue.RecordCommandBuffers(swapChain.renderPass, imageIndex, swapChain.framebuffers[imageIndex],
-									   swapChainSupport.chosenExtent, pipeline, pipelineLayout, model);
-	result = swapChain.SubmitCommandBuffers(device, graphicsQueue.GetCommandBuffer(imageIndex), &imageIndex,
-											graphicsQueue.queue, presentQueue.queue);
+	frameCommandBuffer = graphicsQueue.BeginCommandBuffer(imageIndex);
+	renderPass.Begin(frameCommandBuffer, swapChain.framebuffers[imageIndex],
+					 swapChainSupport.chosenExtent);
+
+	VkViewport viewport = { };
+	viewport.width = static_cast<float>(swapChainSupport.chosenExtent.width);
+	viewport.height = static_cast<float>(swapChainSupport.chosenExtent.height);
+	viewport.maxDepth = 1.0f;
+
+	VkRect2D scissor = {{ }, swapChainSupport.chosenExtent};
+
+	vkCmdSetViewport(frameCommandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(frameCommandBuffer, 0, 1, &scissor);
+
+	return true;
+}
+
+bool sandbox::Device::FinalizeDrawFrame(VkCommandBuffer frameCommandBuffer, uint32_t imageIndex)
+{
+	vkCmdEndRenderPass(frameCommandBuffer);
+	graphicsQueue.EndCommandBuffers(imageIndex);
+	VkResult result = swapChain.SubmitCommandBuffer(device, frameCommandBuffer, imageIndex, graphicsQueue.queue,
+													presentQueue.queue);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 	{
 		return false;
@@ -144,7 +159,7 @@ void sandbox::Device::RecreateSwapChain(VkSurfaceKHR surface, VkExtent2D windowE
 	swapChainSupport = SwapChainSupport(physicalDevice, surface, windowExtent);
 	swapChain.Destroy(device, true);
 	swapChain = SwapChain(swapChainSupport, memoryProperties, device, surface, graphicsQueue.family,
-						  presentQueue.family, swapChain.swapChain);
+						  presentQueue.family, renderPass.renderPass, swapChain.swapChain);
 	if (swapChainSupport.imageCount != oldImageCount)
 	{
 		graphicsQueue.FreeCommandBuffers(device);
@@ -188,13 +203,12 @@ void sandbox::Device::PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surfa
 	LOG(INFO) << "Physical device: " << physicalDeviceProperties.deviceName;
 }
 
-void sandbox::Device::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
-								   VkBuffer & buffer, VkDeviceMemory & bufferMemory) const
+void sandbox::Device::CreateBuffer(VkDeviceSize size, VkBuffer & buffer, VkDeviceMemory & bufferMemory) const
 {
 	VkBufferCreateInfo bufferInfo = { };
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferInfo.size = size;
-	bufferInfo.usage = usage;
+	bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 	if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS)
@@ -208,7 +222,9 @@ void sandbox::Device::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, 
 	VkMemoryAllocateInfo allocateInfo { };
 	allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocateInfo.allocationSize = memoryRequirements.size;
-	allocateInfo.memoryTypeIndex = memoryProperties.FindMemoryType(memoryRequirements.memoryTypeBits, properties);
+	allocateInfo.memoryTypeIndex = memoryProperties.FindMemoryType(memoryRequirements.memoryTypeBits,
+																   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+																   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 	if (vkAllocateMemory(device, &allocateInfo, nullptr, &bufferMemory) != VK_SUCCESS)
 	{

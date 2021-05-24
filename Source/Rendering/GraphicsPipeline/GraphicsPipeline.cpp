@@ -4,7 +4,7 @@
 #include <utility>
 
 sandbox::GraphicsPipeline::GraphicsPipeline(VkDevice device, GraphicsShaderPaths shaderPaths, VkRenderPass renderPass) :
-		pipeline(), layout(), subpass(), shaderPaths(std::move(shaderPaths))
+		pipeline(), subpass(), layout(), shaderPaths(std::move(shaderPaths))
 {
 	CreateLayout(device);
 	Create(device, renderPass);
@@ -15,6 +15,23 @@ void sandbox::GraphicsPipeline::Recreate(VkDevice device, VkRenderPass renderPas
 	Destroy(device);
 	CreateLayout(device);
 	Create(device, renderPass);
+}
+
+void sandbox::GraphicsPipeline::PrepareDrawFrame(VkCommandBuffer commandBuffer, sandbox::Model & model) const
+{
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+	// alert: the model is taken here temporarily, there will be a proper way to render the model
+	model.Bind(commandBuffer);
+
+	for (size_t modelIndex = 0; modelIndex < 4; modelIndex++)
+	{
+		PushConstantData pushConstantData = { };
+		pushConstantData.offset = {0.0f, -0.4f + static_cast<float>(modelIndex) * 0.25f};
+		pushConstantData.color = {0.0f, 0.0f, 0.2f * (static_cast<float>(modelIndex) + 1)};
+		vkCmdPushConstants(commandBuffer, layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+						   sizeof(PushConstantData), &pushConstantData);
+		model.Draw(commandBuffer);
+	}
 }
 
 void sandbox::GraphicsPipeline::Destroy(VkDevice device) const

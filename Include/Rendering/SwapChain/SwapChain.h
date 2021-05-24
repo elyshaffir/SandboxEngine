@@ -2,6 +2,7 @@
 
 #include <Rendering/Device/DeviceMemoryProperties.h>
 #include <Rendering/SwapChain/SwapChainSupport.h>
+#include <Rendering/SwapChain/RenderPass.h>
 
 #include <vector>
 
@@ -13,22 +14,20 @@ namespace sandbox
 	{
 	public:
 		VkSwapchainKHR swapChain;
-		VkRenderPass renderPass;
 		std::vector<VkFramebuffer> framebuffers;
 
 		SwapChain() = default;
 
 		SwapChain(const SwapChainSupport & supportDetails, const DeviceMemoryProperties & deviceMemoryProperties,
 				  VkDevice device, VkSurfaceKHR surface, uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex,
-				  VkSwapchainKHR oldSwapChain = VK_NULL_HANDLE);
+				  VkRenderPass renderPass, VkSwapchainKHR oldSwapChain = VK_NULL_HANDLE);
 
 		void Destroy(VkDevice device, bool recycle);
 
 		VkResult AcquireNextImage(VkDevice device, uint32_t * imageIndex);
 
-		VkResult SubmitCommandBuffers(VkDevice device, const VkCommandBuffer * buffers, const uint32_t * imageIndex,
-									  VkQueue graphicsQueue,
-									  VkQueue presentQueue);
+		VkResult SubmitCommandBuffer(VkDevice device, VkCommandBuffer buffer, uint32_t imageIndex,
+									 VkQueue graphicsQueue, VkQueue presentQueue);
 
 	private:
 		static constexpr size_t MAX_FRAMES_IN_FLIGHT = 2;
@@ -50,12 +49,11 @@ namespace sandbox
 
 		void CreateImageViews(const SwapChainSupport & supportDetails, VkDevice device);
 
-		void CreateRenderPass(const SwapChainSupport & supportDetails, VkDevice device);
-
 		void CreateDepthResources(const SwapChainSupport & supportDetails, VkDevice device,
 								  const DeviceMemoryProperties & deviceMemoryProperties);
 
-		void CreateFramebuffers(const SwapChainSupport & supportDetails, VkDevice device);
+		void CreateFramebuffers(const SwapChainSupport & supportDetails, VkDevice device,
+								VkRenderPass renderPass);
 
 		void CreateSyncObjects(VkDevice device);
 	};

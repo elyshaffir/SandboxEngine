@@ -1,8 +1,6 @@
 #include <Rendering/Queue/GraphicsQueue.h>
-#include <Rendering/GraphicsPipeline/PushConstantData.h>
 
 #include <stdexcept>
-#include <array>
 
 bool sandbox::GraphicsQueue::FindFamily(VkPhysicalDevice physicalDevice)
 {
@@ -25,9 +23,7 @@ void sandbox::GraphicsQueue::Create(VkDevice device, uint32_t imageCount)
 	CreateCommandBuffers(device, imageCount);
 }
 
-void sandbox::GraphicsQueue::RecordCommandBuffers(VkRenderPass renderPass, size_t imageIndex, VkFramebuffer framebuffer,
-												  VkExtent2D chosenExtent, VkPipeline pipeline,
-												  VkPipelineLayout pipelineLayout, const Model & model)
+VkCommandBuffer sandbox::GraphicsQueue::BeginCommandBuffer(size_t imageIndex)
 {
 	VkCommandBufferBeginInfo beginInfo = { };
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -37,54 +33,15 @@ void sandbox::GraphicsQueue::RecordCommandBuffers(VkRenderPass renderPass, size_
 		throw std::runtime_error("Failed to begin recording command buffer");
 	}
 
-	VkRenderPassBeginInfo renderPassBeginInfo = { };
-	renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassBeginInfo.renderPass = renderPass;
-	renderPassBeginInfo.framebuffer = framebuffer;
-	renderPassBeginInfo.renderArea.extent = chosenExtent;
+	return commandBuffers[imageIndex];
+}
 
-	std::array<VkClearValue, 2> clearValues = { };
-	clearValues[0].color = {0.93f, 0.69f, 0.86f, 1.0f};
-	clearValues[1].depthStencil = {1.0f, 0};
-	renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-	renderPassBeginInfo.pClearValues = clearValues.data();
-
-	vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-	VkViewport viewport = { };
-	viewport.width = static_cast<float>(chosenExtent.width);
-	viewport.height = static_cast<float>(chosenExtent.height);
-	viewport.maxDepth = 1.0f;
-
-	VkRect2D scissor = {{ }, chosenExtent};
-
-	vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &viewport);
-	vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &scissor);
-
-	vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-	model.Bind(commandBuffers[imageIndex]);
-
-	for (size_t modelIndex = 0; modelIndex < 4; modelIndex++)
-	{
-		PushConstantData pushConstantData = { };
-		pushConstantData.offset = {0.0f, -0.4f + static_cast<float>(modelIndex) * 0.25f};
-		pushConstantData.color = {0.0f, 0.0f, 0.2f * (static_cast<float>(modelIndex) + 1)};
-		vkCmdPushConstants(commandBuffers[imageIndex], pipelineLayout,
-						   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstantData),
-						   &pushConstantData);
-		model.Draw(commandBuffers[imageIndex]);
-	}
-
-	vkCmdEndRenderPass(commandBuffers[imageIndex]);
+void sandbox::GraphicsQueue::EndCommandBuffers(size_t imageIndex)
+{
 	if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to record command buffer");
 	}
-}
-
-VkCommandBuffer * sandbox::GraphicsQueue::GetCommandBuffer(uint32_t index)
-{
-	return &commandBuffers[index];
 }
 
 void sandbox::GraphicsQueue::CreateCommandBuffers(VkDevice device, uint32_t imageCount)

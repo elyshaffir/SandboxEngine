@@ -15,6 +15,7 @@ namespace sandbox
 	{
 	public:
 		VkDevice device;
+		RenderPass renderPass;
 
 		static constexpr std::array<const char *, 1> DEVICE_EXTENSIONS = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
@@ -24,16 +25,29 @@ namespace sandbox
 
 		void CreateLogicalDevice(const std::set<uint32_t> & queueFamilies);
 
-		VkRenderPass GetRenderPass() const;
-
 		void AllocateVertexBuffer(VertexBuffer & vertexBuffer);
 
 		/*
-		 * Draws a frame and checks if the swap chain needs to be recreated.
+		 * Prepares the ground for binding the graphics pipeline and drawing a frame.
 		 *
-		 * Returns true if the swap chain does not need to be recreated, false otherwise.
+		 * @param frameCommandBuffer: The command buffer to which the draw commands should be
+		 * 							  submitted will be outputted here.
+		 * @param imageIndex: The index of the next image in the swap chain will be outputted here.
+		 *
+		 * Returns true if swap chain is still valid, false otherwise.
 		 */
-		bool DrawFrame(VkPipeline pipeline, VkPipelineLayout pipelineLayout, const Model & model);
+		bool PrepareDrawFrame(VkCommandBuffer & frameCommandBuffer, uint32_t & imageIndex);
+
+		/*
+		 * Finalizes the drawing of a frame.
+		 *
+		 * @param frameCommandBuffer: The command buffer in which the draw commands are submitted.
+		 *
+		 * @param imageIndex: The index of the next image in the swap chain.
+		 *
+		 * Returns true if swap chain is still valid, false otherwise.
+		 */
+		bool FinalizeDrawFrame(VkCommandBuffer frameCommandBuffer, uint32_t imageIndex);
 
 		void RecreateSwapChain(VkSurfaceKHR surface, VkExtent2D windowExtent);
 
@@ -47,7 +61,6 @@ namespace sandbox
 
 		void PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent);
 
-		void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
-						  VkBuffer & buffer, VkDeviceMemory & bufferMemory) const;
+		void CreateBuffer(VkDeviceSize size, VkBuffer & buffer, VkDeviceMemory & bufferMemory) const;
 	};
 }

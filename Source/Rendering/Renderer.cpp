@@ -7,7 +7,7 @@ sandbox::Renderer::Renderer(const WindowConfigurationInfo & windowConfigurationI
 		: window(windowConfigurationInfo), instance(),
 		  surface(instance.instance, window.window),
 		  device(instance.instance, surface.surface, {window.width, window.height}),
-		  pipeline(device.device, graphicsShaderPaths, device.GetRenderPass()), currentFrame(), model(model)
+		  pipeline(device.device, graphicsShaderPaths, device.renderPass.renderPass), currentFrame(), model(model)
 {
 	device.AllocateVertexBuffer(model.vertexBuffer);
 }
@@ -32,16 +32,30 @@ void sandbox::Renderer::DrawFrame()
 		LOG(INFO) << "1000 frame application update!";
 	}
 	currentFrame++;
-	if (!device.DrawFrame(pipeline.pipeline, pipeline.layout, model))
+
+	if (!TryDrawFrame())
 	{
 		window.Recreate();
 		WaitIdle();
 		device.RecreateSwapChain(surface.surface, {window.width, window.height});
-		pipeline.Recreate(device.device, device.GetRenderPass());
+		pipeline.Recreate(device.device, device.renderPass.renderPass);
 	}
 }
 
 void sandbox::Renderer::WaitIdle() const
 {
 	vkDeviceWaitIdle(device.device);
+}
+
+bool sandbox::Renderer::TryDrawFrame()
+{
+	VkCommandBuffer frameCommandBuffer = VK_NULL_HANDLE;
+	uint32_t imageIndex = 0;
+	bool preparationSuccessful = device.PrepareDrawFrame(frameCommandBuffer, imageIndex);
+	if (preparationSuccessful)
+	{
+		pipeline.PrepareDrawFrame(frameCommandBuffer, model);
+		return device.FinalizeDrawFrame(frameCommandBuffer, imageIndex);
+	}
+	return false;
 }

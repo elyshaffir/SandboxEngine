@@ -34,5 +34,12 @@ namespace sandbox
 		Device device;
 		GraphicsPipeline pipeline;
 		Model & model;
+
+		/*
+		 * Tries to draw a frame.
+		 *
+		 * Returns true on success, false otherwise.
+		 */
+		bool TryDrawFrame();
 	};
 }

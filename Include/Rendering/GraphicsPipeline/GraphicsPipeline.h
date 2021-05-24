@@ -10,16 +10,18 @@ namespace sandbox
 	{
 	public:
 		VkPipeline pipeline;
-		VkPipelineLayout layout;
 
 		GraphicsPipeline(VkDevice device, GraphicsShaderPaths shaderPaths, VkRenderPass renderPass);
 
 		void Recreate(VkDevice device, VkRenderPass renderPass);
 
+		void PrepareDrawFrame(VkCommandBuffer commandBuffer, Model & model) const;
+
 		void Destroy(VkDevice device) const;
 
 	private:
 		uint32_t subpass;
+		VkPipelineLayout layout;
 		GraphicsShaderPaths shaderPaths;
 
 		void Create(VkDevice device, VkRenderPass renderPass);

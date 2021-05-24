@@ -4,8 +4,7 @@
 #include <array>
 
 static void CreateImageWithInfo(VkDevice device, const sandbox::DeviceMemoryProperties & deviceMemoryProperties,
-								const VkImageCreateInfo & imageInfo, VkMemoryPropertyFlags properties, VkImage & image,
-								VkDeviceMemory & imageMemory)
+								const VkImageCreateInfo & imageInfo, VkImage & image, VkDeviceMemory & imageMemory)
 {
 	if (vkCreateImage(device, &imageInfo, nullptr, &image) != VK_SUCCESS)
 	{
@@ -18,7 +17,8 @@ static void CreateImageWithInfo(VkDevice device, const sandbox::DeviceMemoryProp
 	VkMemoryAllocateInfo allocInfo = { };
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = memoryRequirements.size;
-	allocInfo.memoryTypeIndex = deviceMemoryProperties.FindMemoryType(memoryRequirements.memoryTypeBits, properties);
+	allocInfo.memoryTypeIndex = deviceMemoryProperties.FindMemoryType(memoryRequirements.memoryTypeBits,
+																	  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 	if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
 	{
@@ -34,14 +34,14 @@ static void CreateImageWithInfo(VkDevice device, const sandbox::DeviceMemoryProp
 sandbox::SwapChain::SwapChain(const SwapChainSupport & supportDetails,
 							  const DeviceMemoryProperties & deviceMemoryProperties,
 							  VkDevice device, VkSurfaceKHR surface, uint32_t graphicsFamilyIndex,
-							  uint32_t presentFamilyIndex, VkSwapchainKHR oldSwapChain)
-		: swapChain(), frameIndex(), renderPass()
+							  uint32_t presentFamilyIndex,
+							  VkRenderPass renderPass, VkSwapchainKHR oldSwapChain)
+		: swapChain(), frameIndex()
 {
 	Create(supportDetails, device, surface, graphicsFamilyIndex, presentFamilyIndex, oldSwapChain);
 	CreateImageViews(supportDetails, device);
-	CreateRenderPass(supportDetails, device);
 	CreateDepthResources(supportDetails, device, deviceMemoryProperties);
-	CreateFramebuffers(supportDetails, device);
+	CreateFramebuffers(supportDetails, device, renderPass);
 	CreateSyncObjects(device);
 }
 
@@ -71,8 +71,6 @@ void sandbox::SwapChain::Destroy(VkDevice device, bool recycle)
 		vkDestroyFramebuffer(device, framebuffer, nullptr);
 	}
 
-	vkDestroyRenderPass(device, renderPass, nullptr);
-
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 	{
 		vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
@@ -91,15 +89,14 @@ VkResult sandbox::SwapChain::AcquireNextImage(VkDevice device, uint32_t * imageI
 	return result;
 }
 
-VkResult sandbox::SwapChain::SubmitCommandBuffers(VkDevice device, const VkCommandBuffer * buffers,
-												  const uint32_t * imageIndex, VkQueue graphicsQueue,
-												  VkQueue presentQueue)
+VkResult sandbox::SwapChain::SubmitCommandBuffer(VkDevice device, VkCommandBuffer buffer, uint32_t imageIndex,
+												 VkQueue graphicsQueue, VkQueue presentQueue)
 {
-	if (imagesInFlight[*imageIndex] != VK_NULL_HANDLE)
+	if (imagesInFlight[imageIndex] != VK_NULL_HANDLE)
 	{
-		vkWaitForFences(device, 1, &imagesInFlight[*imageIndex], VK_TRUE, UINT64_MAX);
+		vkWaitForFences(device, 1, &imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
 	}
-	imagesInFlight[*imageIndex] = inFlightFences[frameIndex];
+	imagesInFlight[imageIndex] = inFlightFences[frameIndex];
 
 	VkSubmitInfo submitInfo = { };
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -111,7 +108,7 @@ VkResult sandbox::SwapChain::SubmitCommandBuffers(VkDevice device, const VkComma
 	submitInfo.pWaitDstStageMask = waitStages;
 
 	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = buffers;
+	submitInfo.pCommandBuffers = &buffer;
 
 	VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[frameIndex]};
 	submitInfo.signalSemaphoreCount = 1;
@@ -133,7 +130,7 @@ VkResult sandbox::SwapChain::SubmitCommandBuffers(VkDevice device, const VkComma
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = swapChains;
 
-	presentInfo.pImageIndices = imageIndex;
+	presentInfo.pImageIndices = &imageIndex;
 
 	VkResult result = vkQueuePresentKHR(presentQueue, &presentInfo);
 
@@ -199,64 +196,6 @@ void sandbox::SwapChain::CreateImageViews(const SwapChainSupport & supportDetail
 	}
 }
 
-void sandbox::SwapChain::CreateRenderPass(const SwapChainSupport & supportDetails, VkDevice device)
-{
-	VkAttachmentDescription depthAttachment = { };
-	supportDetails.PopulateDepthAttachment(&depthAttachment);
-	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-	VkAttachmentReference depthAttachmentRef = { };
-	depthAttachmentRef.attachment = 1;
-	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-	VkAttachmentDescription colorAttachment = { };
-	supportDetails.PopulateColorAttachment(&colorAttachment);
-	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-	VkAttachmentReference colorAttachmentRef = { };
-	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	VkSubpassDescription subpass = { };
-	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.colorAttachmentCount = 1;
-	subpass.pColorAttachments = &colorAttachmentRef;
-	subpass.pDepthStencilAttachment = &depthAttachmentRef;
-
-	VkSubpassDependency dependency = { };
-
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-
-	std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
-	VkRenderPassCreateInfo renderPassInfo = { };
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-	renderPassInfo.pAttachments = attachments.data();
-	renderPassInfo.subpassCount = 1;
-	renderPassInfo.pSubpasses = &subpass;
-	renderPassInfo.dependencyCount = 1;
-	renderPassInfo.pDependencies = &dependency;
-
-	if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to create render pass");
-	}
-}
-
 void sandbox::SwapChain::CreateDepthResources(const SwapChainSupport & supportDetails, VkDevice device,
 											  const DeviceMemoryProperties & deviceMemoryProperties)
 {
@@ -279,8 +218,7 @@ void sandbox::SwapChain::CreateDepthResources(const SwapChainSupport & supportDe
 		depthImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		depthImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		CreateImageWithInfo(device, deviceMemoryProperties, depthImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-							depthImages[i], depthImageMemories[i]);
+		CreateImageWithInfo(device, deviceMemoryProperties, depthImageInfo, depthImages[i], depthImageMemories[i]);
 
 		VkImageViewCreateInfo depthImageViewInfo = { };
 		depthImageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -298,7 +236,8 @@ void sandbox::SwapChain::CreateDepthResources(const SwapChainSupport & supportDe
 	}
 }
 
-void sandbox::SwapChain::CreateFramebuffers(const SwapChainSupport & supportDetails, VkDevice device)
+void sandbox::SwapChain::CreateFramebuffers(const SwapChainSupport & supportDetails, VkDevice device,
+											VkRenderPass renderPass)
 {
 	framebuffers.resize(images.size());
 	for (size_t i = 0; i < images.size(); i++)
