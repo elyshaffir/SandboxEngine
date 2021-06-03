@@ -7,7 +7,8 @@ sandbox::Renderer::Renderer(const WindowConfigurationInfo & windowConfigurationI
 		: window(windowConfigurationInfo), instance(),
 		  surface(instance.instance, window.window),
 		  device(instance.instance, surface.surface, {window.width, window.height}),
-		  pipeline(device.device, graphicsShaderPaths, device.renderPass.renderPass), currentFrame(), model(model)
+		  pipeline(device.device, graphicsShaderPaths, device.swapChain.renderPass.renderPass), currentFrame(1),
+		  model(model)
 {
 	device.AllocateVertexBuffer(model.vertexBuffer);
 }
@@ -38,7 +39,7 @@ void sandbox::Renderer::DrawFrame()
 		window.Recreate();
 		WaitIdle();
 		device.RecreateSwapChain(surface.surface, {window.width, window.height});
-		pipeline.Recreate(device.device, device.renderPass.renderPass);
+		pipeline.Recreate(device.device, device.swapChain.renderPass.renderPass);
 	}
 }
 
@@ -49,13 +50,11 @@ void sandbox::Renderer::WaitIdle() const
 
 bool sandbox::Renderer::TryDrawFrame()
 {
-	VkCommandBuffer frameCommandBuffer = VK_NULL_HANDLE;
-	uint32_t imageIndex = 0;
-	bool preparationSuccessful = device.PrepareDrawFrame(frameCommandBuffer, imageIndex);
+	bool preparationSuccessful = device.swapChain.BeginDrawFrame(device.device);
 	if (preparationSuccessful)
 	{
-		pipeline.PrepareDrawFrame(frameCommandBuffer, model);
-		return device.FinalizeDrawFrame(frameCommandBuffer, imageIndex);
+		pipeline.PrepareDrawFrame(device.swapChain.GetCurrentFrameCommandBuffer(), model);
+		return device.FinalizeDrawFrame();
 	}
 	return false;
 }

@@ -3,10 +3,10 @@
 #include <array>
 #include <stdexcept>
 
-sandbox::RenderPass::RenderPass(const sandbox::SwapChainSupport & supportDetails, VkDevice device) : renderPass()
+sandbox::RenderPass::RenderPass(VkDevice device, VkFormat depthFormat) : renderPass()
 {
 	VkAttachmentDescription depthAttachment = { };
-	supportDetails.PopulateDepthAttachment(&depthAttachment);
+	depthAttachment.format = depthFormat;
 	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -20,7 +20,7 @@ sandbox::RenderPass::RenderPass(const sandbox::SwapChainSupport & supportDetails
 	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 	VkAttachmentDescription colorAttachment = { };
-	supportDetails.PopulateColorAttachment(&colorAttachment);
+	colorAttachment.format = VK_FORMAT_B8G8R8A8_SRGB;
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -61,7 +61,8 @@ sandbox::RenderPass::RenderPass(const sandbox::SwapChainSupport & supportDetails
 	}
 }
 
-void sandbox::RenderPass::Begin(VkCommandBuffer commandBuffer, VkFramebuffer framebuffer, VkExtent2D swapChainExtent) const
+void sandbox::RenderPass::Begin(VkFramebuffer framebuffer, VkCommandBuffer commandBuffer,
+								VkExtent2D swapChainExtent) const
 {
 	VkRenderPassBeginInfo renderPassBeginInfo = { };
 	renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;

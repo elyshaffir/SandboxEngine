@@ -1,0 +1,141 @@
+#include <Rendering/Device/PhysicalDevice.h>
+
+#include <set>
+
+#include <glog/logging.h>
+
+sandbox::PhysicalDevice::PhysicalDevice(VkInstance instance, VkSurfaceKHR surface) : physicalDevice(), properties()
+{
+	PickPhysicalDevice(instance, surface);
+	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &properties);
+}
+
+std::vector<VkSurfaceFormatKHR> sandbox::PhysicalDevice::GenerateSurfaceFormats(VkSurfaceKHR surface) const
+{
+	std::vector<VkSurfaceFormatKHR> formats;
+	uint32_t formatCount = 0;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, nullptr);
+
+	if (formatCount != 0)
+	{
+		formats.resize(formatCount);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, formats.data());
+	}
+	return formats;
+}
+
+std::vector<VkPresentModeKHR> sandbox::PhysicalDevice::GeneratePresentModes(VkSurfaceKHR surface) const
+{
+	std::vector<VkPresentModeKHR> presentModes;
+	uint32_t presentModeCount = 0;
+	vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, nullptr);
+
+	if (presentModeCount != 0)
+	{
+		presentModes.resize(presentModeCount);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, presentModes.data());
+	}
+	return presentModes;
+}
+
+void sandbox::PhysicalDevice::PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface)
+{
+	uint32_t deviceCount = 0;
+	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+	if (deviceCount == 0)
+	{
+		throw std::runtime_error("Failed to find GPUs with Vulkan support");
+	}
+	LOG(INFO) << "Device count: " << deviceCount;
+	std::vector<VkPhysicalDevice> availableDevices(deviceCount);
+	vkEnumeratePhysicalDevices(instance, &deviceCount, availableDevices.data());
+
+	for (const auto & availableDevice : availableDevices)
+	{
+		physicalDevice = availableDevice;
+		if (AreExtensionsSupported() && !GenerateSurfaceFormats(surface).empty() &&
+			!GeneratePresentModes(surface).empty() && AreFeaturesSupported() &&
+			FindGraphicsFamily() && FindPresentFamily(surface))
+		{
+			break;
+		}
+	}
+
+	if (physicalDevice == VK_NULL_HANDLE)
+	{
+		throw std::runtime_error("Failed to find a suitable GPU");
+	}
+
+	VkPhysicalDeviceProperties physicalDeviceProperties = { };
+	vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+	LOG(INFO) << "Physical device: " << physicalDeviceProperties.deviceName;
+}
+
+bool sandbox::PhysicalDevice::AreExtensionsSupported() const
+{
+	uint32_t extensionCount = 0;
+	vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, nullptr);
+
+	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+	vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, availableExtensions.data());
+
+	std::set<std::string> requiredExtensions(NEEDED_EXTENSIONS.begin(), NEEDED_EXTENSIONS.end());
+
+	for (const auto & extension : availableExtensions)
+	{
+		requiredExtensions.erase(extension.extensionName);
+	}
+
+	return requiredExtensions.empty();
+}
+
+bool sandbox::PhysicalDevice::AreFeaturesSupported() const
+{
+	VkPhysicalDeviceFeatures supportedFeatures = { };
+	vkGetPhysicalDeviceFeatures(physicalDevice, &supportedFeatures);
+
+	return supportedFeatures.samplerAnisotropy;
+}
+
+std::vector<VkQueueFamilyProperties> sandbox::PhysicalDevice::GetQueueFamilies() const
+{
+	uint32_t queueFamilyCount = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
+
+	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilies.data());
+
+	return queueFamilies;
+}
+
+bool sandbox::PhysicalDevice::FindGraphicsFamily()
+{
+	uint32_t i = 0;
+	for (const auto & queueFamily : GetQueueFamilies())
+	{
+		if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+		{
+			graphicsQueueFamilyIndex = i;
+			return true;
+		}
+		i++;
+	}
+	return false;
+}
+
+bool sandbox::PhysicalDevice::FindPresentFamily(VkSurfaceKHR surface)
+{
+	uint32_t i = 0;
+	for (const auto & queueFamily : GetQueueFamilies())
+	{
+		VkBool32 presentSupport = false;
+		vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &presentSupport);
+		if (queueFamily.queueCount > 0 && presentSupport)
+		{
+			presentQueueFamilyIndex = i;
+			return true;
+		}
+		i++;
+	}
+	return false;
+}

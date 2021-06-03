@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Rendering/Device/DeviceMemoryProperties.h>
-#include <Rendering/SwapChain/SwapChainSupport.h>
 #include <Rendering/SwapChain/RenderPass.h>
+#include <Rendering/SwapChain/SwapChainImage.h>
+#include <Rendering/Device/CommandPool.h>
 
 #include <vector>
 
@@ -13,47 +13,54 @@ namespace sandbox
 	class SwapChain
 	{
 	public:
+		RenderPass renderPass;
 		VkSwapchainKHR swapChain;
-		std::vector<VkFramebuffer> framebuffers;
 
-		SwapChain() = default;
+		SwapChain() = default; // todo: find a way to remove
 
-		SwapChain(const SwapChainSupport & supportDetails, const DeviceMemoryProperties & deviceMemoryProperties,
-				  VkDevice device, VkSurfaceKHR surface, uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex,
-				  VkRenderPass renderPass, VkSwapchainKHR oldSwapChain = VK_NULL_HANDLE);
+		SwapChain(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface,
+				  const std::vector<VkPresentModeKHR> & availablePresentModes, VkExtent2D windowExtent,
+				  const std::vector<VkSurfaceFormatKHR> & availableFormats,
+				  const VkPhysicalDeviceMemoryProperties & physicalDeviceMemoryProperties,
+				  uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex,
+				  VkSwapchainKHR oldSwapChain = VK_NULL_HANDLE);
+
+		bool BeginDrawFrame(VkDevice device);
+
+		VkCommandBuffer GetCurrentFrameCommandBuffer();
+
+		VkResult FinalizeDrawFrame(VkDevice device, VkQueue graphicsQueue, VkQueue presentQueue);
 
 		void Destroy(VkDevice device, bool recycle);
-
-		VkResult AcquireNextImage(VkDevice device, uint32_t * imageIndex);
-
-		VkResult SubmitCommandBuffer(VkDevice device, VkCommandBuffer buffer, uint32_t imageIndex,
-									 VkQueue graphicsQueue, VkQueue presentQueue);
 
 	private:
 		static constexpr size_t MAX_FRAMES_IN_FLIGHT = 2;
 
-		size_t frameIndex;
-		std::vector<VkImage> depthImages;
-		std::vector<VkDeviceMemory> depthImageMemories;
-		std::vector<VkImageView> depthImageViews;
-		std::vector<VkImage> images;
-		std::vector<VkImageView> imageViews;
+		uint32_t imageCount;
+		std::vector<SwapChainImage> images;
+		VkExtent2D extent;
+		VkSurfaceFormatKHR surfaceFormat;
+		VkFormat depthFormat;
+		size_t inFlightFrameIndex;
+		uint32_t imageIndex;
 		std::vector<VkSemaphore> imageAvailableSemaphores;
 		std::vector<VkSemaphore> renderFinishedSemaphores;
 		std::vector<VkFence> inFlightFences;
-		std::vector<VkFence> imagesInFlight;
+		CommandPool graphicsCommandPool;
 
-		void Create(const SwapChainSupport & supportDetails, VkDevice device, VkSurfaceKHR surface,
-					uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex,
-					VkSwapchainKHR oldSwapChain = VK_NULL_HANDLE);
+		void ChooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR> & availableFormats);
 
-		void CreateImageViews(const SwapChainSupport & supportDetails, VkDevice device);
+		void ChooseDepthFormat(VkPhysicalDevice physicalDevice);
 
-		void CreateDepthResources(const SwapChainSupport & supportDetails, VkDevice device,
-								  const DeviceMemoryProperties & deviceMemoryProperties);
+		void CreateImages(VkDevice device, const VkPhysicalDeviceMemoryProperties & physicalDeviceMemoryProperties);
 
-		void CreateFramebuffers(const SwapChainSupport & supportDetails, VkDevice device,
-								VkRenderPass renderPass);
+		void ChooseExtent(VkExtent2D windowExtent, const VkSurfaceCapabilitiesKHR & surfaceCapabilities);
+
+		void CalculateImageCount(const VkSurfaceCapabilitiesKHR & surfaceCapabilities);
+
+		void Create(VkDevice device, VkSurfaceKHR surface, const VkSurfaceCapabilitiesKHR & surfaceCapabilities,
+					const std::vector<VkPresentModeKHR> & availablePresentModes,
+					uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex, VkSwapchainKHR oldSwapChain);
 
 		void CreateSyncObjects(VkDevice device);
 	};

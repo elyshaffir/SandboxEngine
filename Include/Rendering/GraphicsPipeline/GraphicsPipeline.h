@@ -2,7 +2,7 @@
 
 #include <Rendering/Device/Device.h>
 #include <Rendering/GraphicsPipeline/GraphicsShaderModules.h>
-#include <Rendering/GraphicsPipeline/PushConstantData.h>
+#include <Rendering/Model/Model.h>
 
 namespace sandbox
 {

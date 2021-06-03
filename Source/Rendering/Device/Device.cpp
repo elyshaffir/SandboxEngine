@@ -1,35 +1,6 @@
 #include <Rendering/Device/Device.h>
 
-#include <set>
-
 #include <glog/logging.h>
-
-static bool IsDeviceExtensionsSupported(VkPhysicalDevice physicalDevice)
-{
-	uint32_t extensionCount = 0;
-	vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, nullptr);
-
-	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-	vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, availableExtensions.data());
-
-	std::set<std::string> requiredExtensions(sandbox::Device::DEVICE_EXTENSIONS.begin(),
-											 sandbox::Device::DEVICE_EXTENSIONS.end());
-
-	for (const auto & extension : availableExtensions)
-	{
-		requiredExtensions.erase(extension.extensionName);
-	}
-
-	return requiredExtensions.empty();
-}
-
-static bool IsDeviceRequiredFeaturesSupported(VkPhysicalDevice physicalDevice)
-{
-	VkPhysicalDeviceFeatures supportedFeatures = { };
-	vkGetPhysicalDeviceFeatures(physicalDevice, &supportedFeatures);
-
-	return supportedFeatures.samplerAnisotropy;
-}
 
 static VkPhysicalDeviceFeatures GenerateRequiredDeviceFeatures()
 {
@@ -40,25 +11,19 @@ static VkPhysicalDeviceFeatures GenerateRequiredDeviceFeatures()
 }
 
 sandbox::Device::Device(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent)
-		: physicalDevice(), memoryProperties(), device(), swapChainSupport(), graphicsQueue(), presentQueue(),
-		  swapChain(), renderPass()
+		: physicalDevice(instance, surface), device(), graphicsQueue(), presentQueue()
 {
-	PickPhysicalDevice(instance, surface, windowExtent);
-	memoryProperties = DeviceMemoryProperties(physicalDevice);
-	CreateLogicalDevice({graphicsQueue.family, presentQueue.family});
-	renderPass = RenderPass(swapChainSupport, device);
-	swapChain = SwapChain(swapChainSupport, memoryProperties, device, surface, graphicsQueue.family,
-						  presentQueue.family, renderPass.renderPass);
-	graphicsQueue.Create(device, swapChainSupport.imageCount);
-	presentQueue.Create(device);
+	CreateLogicalDevice({physicalDevice.graphicsQueueFamilyIndex, physicalDevice.presentQueueFamilyIndex});
+	vkGetDeviceQueue(device, physicalDevice.graphicsQueueFamilyIndex, 0, &graphicsQueue);
+	vkGetDeviceQueue(device, physicalDevice.presentQueueFamilyIndex, 0, &presentQueue);
+	swapChain = SwapChain(physicalDevice.physicalDevice, device, surface, physicalDevice.GeneratePresentModes(surface),
+						  windowExtent, physicalDevice.GenerateSurfaceFormats(surface), physicalDevice.properties,
+						  physicalDevice.graphicsQueueFamilyIndex, physicalDevice.presentQueueFamilyIndex);
 }
 
 void sandbox::Device::Destroy()
 {
-	graphicsQueue.Destroy(device);
-	presentQueue.Destroy(device);
 	swapChain.Destroy(device, false);
-	renderPass.Destroy(device);
 	vkDestroyDevice(device, nullptr);
 }
 
@@ -84,10 +49,10 @@ void sandbox::Device::CreateLogicalDevice(const std::set<uint32_t> & queueFamili
 	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 	createInfo.pQueueCreateInfos = queueCreateInfos.data();
 	createInfo.pEnabledFeatures = &requiredDeviceFeatures;
-	createInfo.enabledExtensionCount = static_cast<uint32_t>(DEVICE_EXTENSIONS.size());
-	createInfo.ppEnabledExtensionNames = DEVICE_EXTENSIONS.data();
+	createInfo.enabledExtensionCount = static_cast<uint32_t>(PhysicalDevice::NEEDED_EXTENSIONS.size());
+	createInfo.ppEnabledExtensionNames = PhysicalDevice::NEEDED_EXTENSIONS.data();
 
-	if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
+	if (vkCreateDevice(physicalDevice.physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create logical device");
 	}
@@ -96,8 +61,7 @@ void sandbox::Device::CreateLogicalDevice(const std::set<uint32_t> & queueFamili
 void sandbox::Device::AllocateVertexBuffer(VertexBuffer & vertexBuffer)
 {
 	BufferAllocationData allocationData = vertexBuffer.GenerateAllocationData();
-	CreateBuffer(allocationData.size, vertexBuffer.buffer,
-				 allocationData.memory);
+	CreateBuffer(allocationData.size, vertexBuffer.buffer, allocationData.memory);
 
 	void * data = nullptr;
 	vkMapMemory(device, allocationData.memory, 0, allocationData.size, 0, &data);
@@ -105,43 +69,9 @@ void sandbox::Device::AllocateVertexBuffer(VertexBuffer & vertexBuffer)
 	vkUnmapMemory(device, allocationData.memory);
 }
 
-bool sandbox::Device::PrepareDrawFrame(VkCommandBuffer & frameCommandBuffer, uint32_t & imageIndex)
+bool sandbox::Device::FinalizeDrawFrame()
 {
-	VkResult result = swapChain.AcquireNextImage(device, &imageIndex);
-
-	if (result == VK_ERROR_OUT_OF_DATE_KHR)
-	{
-		return false;
-	}
-
-	if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
-	{
-		throw std::runtime_error("Failed to acquire swap chain image");
-	}
-
-	frameCommandBuffer = graphicsQueue.BeginCommandBuffer(imageIndex);
-	renderPass.Begin(frameCommandBuffer, swapChain.framebuffers[imageIndex],
-					 swapChainSupport.chosenExtent);
-
-	VkViewport viewport = { };
-	viewport.width = static_cast<float>(swapChainSupport.chosenExtent.width);
-	viewport.height = static_cast<float>(swapChainSupport.chosenExtent.height);
-	viewport.maxDepth = 1.0f;
-
-	VkRect2D scissor = {{ }, swapChainSupport.chosenExtent};
-
-	vkCmdSetViewport(frameCommandBuffer, 0, 1, &viewport);
-	vkCmdSetScissor(frameCommandBuffer, 0, 1, &scissor);
-
-	return true;
-}
-
-bool sandbox::Device::FinalizeDrawFrame(VkCommandBuffer frameCommandBuffer, uint32_t imageIndex)
-{
-	vkCmdEndRenderPass(frameCommandBuffer);
-	graphicsQueue.EndCommandBuffers(imageIndex);
-	VkResult result = swapChain.SubmitCommandBuffer(device, frameCommandBuffer, imageIndex, graphicsQueue.queue,
-													presentQueue.queue);
+	VkResult result = swapChain.FinalizeDrawFrame(device, graphicsQueue, presentQueue);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 	{
 		return false;
@@ -155,52 +85,11 @@ bool sandbox::Device::FinalizeDrawFrame(VkCommandBuffer frameCommandBuffer, uint
 
 void sandbox::Device::RecreateSwapChain(VkSurfaceKHR surface, VkExtent2D windowExtent)
 {
-	uint32_t oldImageCount = swapChainSupport.imageCount;
-	swapChainSupport = SwapChainSupport(physicalDevice, surface, windowExtent);
 	swapChain.Destroy(device, true);
-	swapChain = SwapChain(swapChainSupport, memoryProperties, device, surface, graphicsQueue.family,
-						  presentQueue.family, renderPass.renderPass, swapChain.swapChain);
-	if (swapChainSupport.imageCount != oldImageCount)
-	{
-		graphicsQueue.FreeCommandBuffers(device);
-		graphicsQueue.CreateCommandBuffers(device, swapChainSupport.imageCount);
-	}
-}
-
-void sandbox::Device::PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent)
-{
-	uint32_t deviceCount = 0;
-	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
-	if (deviceCount == 0)
-	{
-		throw std::runtime_error("Failed to find GPUs with Vulkan support");
-	}
-	LOG(INFO) << "Device count: " << deviceCount;
-	std::vector<VkPhysicalDevice> availableDevices(deviceCount);
-	vkEnumeratePhysicalDevices(instance, &deviceCount, availableDevices.data());
-
-	for (const auto & availableDevice : availableDevices)
-	{
-		SwapChainSupport potentialSwapChainSupport(availableDevice, surface, windowExtent);
-
-		if (IsDeviceExtensionsSupported(availableDevice) && potentialSwapChainSupport.IsComplete() &&
-			IsDeviceRequiredFeaturesSupported(availableDevice) && graphicsQueue.FindFamily(availableDevice) &&
-			presentQueue.FindFamily(availableDevice, surface))
-		{
-			physicalDevice = availableDevice;
-			swapChainSupport = potentialSwapChainSupport;
-			break;
-		}
-	}
-
-	if (physicalDevice == VK_NULL_HANDLE)
-	{
-		throw std::runtime_error("Failed to find a suitable GPU");
-	}
-
-	VkPhysicalDeviceProperties physicalDeviceProperties = { };
-	vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
-	LOG(INFO) << "Physical device: " << physicalDeviceProperties.deviceName;
+	swapChain = SwapChain(physicalDevice.physicalDevice, device, surface, physicalDevice.GeneratePresentModes(surface),
+						  windowExtent, physicalDevice.GenerateSurfaceFormats(surface), physicalDevice.properties,
+						  physicalDevice.graphicsQueueFamilyIndex, physicalDevice.presentQueueFamilyIndex,
+						  swapChain.swapChain);
 }
 
 void sandbox::Device::CreateBuffer(VkDeviceSize size, VkBuffer & buffer, VkDeviceMemory & bufferMemory) const
@@ -222,17 +111,26 @@ void sandbox::Device::CreateBuffer(VkDeviceSize size, VkBuffer & buffer, VkDevic
 	VkMemoryAllocateInfo allocateInfo { };
 	allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocateInfo.allocationSize = memoryRequirements.size;
-	allocateInfo.memoryTypeIndex = memoryProperties.FindMemoryType(memoryRequirements.memoryTypeBits,
-																   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-																   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-	if (vkAllocateMemory(device, &allocateInfo, nullptr, &bufferMemory) != VK_SUCCESS)
+	VkMemoryPropertyFlags propertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+										  VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+	for (uint32_t i = 0; i < physicalDevice.properties.memoryTypeCount; i++)
 	{
-		throw std::runtime_error("Failed to allocate vertex buffer memory");
+		if ((memoryRequirements.memoryTypeBits & (1 << i)) &&
+			(physicalDevice.properties.memoryTypes[i].propertyFlags & propertyFlags) == propertyFlags)
+		{
+			allocateInfo.memoryTypeIndex = i;
+			if (vkAllocateMemory(device, &allocateInfo, nullptr, &bufferMemory) != VK_SUCCESS)
+			{
+				throw std::runtime_error("Failed to allocate vertex buffer memory");
+			}
+
+			if (vkBindBufferMemory(device, buffer, bufferMemory, 0) != VK_SUCCESS)
+			{
+				throw std::runtime_error("Failed to bind buffer memory");
+			}
+			return;
+		}
 	}
 
-	if (vkBindBufferMemory(device, buffer, bufferMemory, 0) != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to bind buffer memory");
-	}
+	throw std::runtime_error("Failed to find suitable buffer memory type");
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Rendering/SwapChain/SwapChainSupport.h>
+#include <Rendering/SwapChain/SwapChainImage.h>
 
 #include <vulkan/vulkan.h>
 
@@ -13,9 +13,9 @@ namespace sandbox
 
 		RenderPass() = default;
 
-		RenderPass(const SwapChainSupport & supportDetails, VkDevice device);
+		explicit RenderPass(VkDevice device, VkFormat depthFormat);
 
-		void Begin(VkCommandBuffer commandBuffer, VkFramebuffer framebuffer, VkExtent2D swapChainExtent) const;
+		void Begin(VkFramebuffer framebuffer, VkCommandBuffer commandBuffer, VkExtent2D swapChainExtent) const;
 
 		void Destroy(VkDevice device) const;
 	};
