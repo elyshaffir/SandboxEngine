@@ -19,7 +19,7 @@ namespace sandbox
 
 		void Destroy();
 
-		void CreateLogicalDevice(const std::set<uint32_t> & queueFamilies);
+		void CreateLogicalDevice();
 
 		void AllocateVertexBuffer(VertexBuffer & vertexBuffer);
 

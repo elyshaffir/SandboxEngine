@@ -13,7 +13,7 @@ static VkPhysicalDeviceFeatures GenerateRequiredDeviceFeatures()
 sandbox::Device::Device(VkInstance instance, VkSurfaceKHR surface, VkExtent2D windowExtent)
 		: physicalDevice(instance, surface), device(), graphicsQueue(), presentQueue()
 {
-	CreateLogicalDevice({physicalDevice.graphicsQueueFamilyIndex, physicalDevice.presentQueueFamilyIndex});
+	CreateLogicalDevice();
 	vkGetDeviceQueue(device, physicalDevice.graphicsQueueFamilyIndex, 0, &graphicsQueue);
 	vkGetDeviceQueue(device, physicalDevice.presentQueueFamilyIndex, 0, &presentQueue);
 	swapChain = SwapChain(physicalDevice.physicalDevice, device, surface, physicalDevice.GeneratePresentModes(surface),
@@ -27,12 +27,14 @@ void sandbox::Device::Destroy()
 	vkDestroyDevice(device, nullptr);
 }
 
-void sandbox::Device::CreateLogicalDevice(const std::set<uint32_t> & queueFamilies)
+void sandbox::Device::CreateLogicalDevice()
 {
+	std::set<uint32_t> uniqueQueueFamilies = {
+			physicalDevice.graphicsQueueFamilyIndex, physicalDevice.presentQueueFamilyIndex
+	};
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 	float queuePriority = 1.0f;
-
-	for (uint32_t queueFamily : queueFamilies)
+	for (uint32_t queueFamily : uniqueQueueFamilies)
 	{
 		VkDeviceQueueCreateInfo queueCreateInfo = { };
 		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
