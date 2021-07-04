@@ -41,6 +41,7 @@ namespace sandbox
 		VkExtent2D extent;
 		VkSurfaceFormatKHR surfaceFormat;
 		VkFormat depthFormat;
+		VkPresentModeKHR presentMode;
 		size_t inFlightFrameIndex;
 		uint32_t imageIndex;
 		std::vector<VkSemaphore> imageAvailableSemaphores;
@@ -59,7 +60,6 @@ namespace sandbox
 		void CalculateImageCount(const VkSurfaceCapabilitiesKHR & surfaceCapabilities);
 
 		void Create(VkDevice device, VkSurfaceKHR surface, const VkSurfaceCapabilitiesKHR & surfaceCapabilities,
-					VkPresentModeKHR presentMode,
 					uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex, VkSwapchainKHR oldSwapChain);
 
 		void CreateSyncObjects(VkDevice device);

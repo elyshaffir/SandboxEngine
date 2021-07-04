@@ -11,7 +11,7 @@ sandbox::SwapChain::SwapChain(VkPhysicalDevice physicalDevice, VkDevice device, 
 							  uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex,
 							  VkSwapchainKHR oldSwapChain)
 		: swapChain(), renderPass(), inFlightFrameIndex(), imageCount(), extent(), surfaceFormat(), depthFormat(),
-		  imageIndex()
+		presentMode(presentMode), imageIndex()
 {
 	VkSurfaceCapabilitiesKHR surfaceCapabilities = { };
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities);
@@ -20,7 +20,7 @@ sandbox::SwapChain::SwapChain(VkPhysicalDevice physicalDevice, VkDevice device, 
 	ChooseSurfaceFormat(availableFormats);
 	ChooseDepthFormat(physicalDevice);
 	renderPass = RenderPass(device, depthFormat);
-	Create(device, surface, surfaceCapabilities, presentMode, graphicsFamilyIndex, presentFamilyIndex, oldSwapChain);
+	Create(device, surface, surfaceCapabilities, graphicsFamilyIndex, presentFamilyIndex, oldSwapChain);
 	graphicsCommandPool = CommandPool(device, graphicsFamilyIndex);
 	CreateImages(device, physicalDeviceMemoryProperties);
 	CreateSyncObjects(device);
@@ -137,10 +137,9 @@ void sandbox::SwapChain::Destroy(VkDevice device, bool recycle)
 	renderPass.Destroy(device);
 }
 
-void sandbox::SwapChain::Create(VkDevice device, VkSurfaceKHR surface,
-								const VkSurfaceCapabilitiesKHR & surfaceCapabilities,
-								VkPresentModeKHR presentMode, uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex,
-								VkSwapchainKHR oldSwapChain)
+void
+sandbox::SwapChain::Create(VkDevice device, VkSurfaceKHR surface, const VkSurfaceCapabilitiesKHR & surfaceCapabilities,
+						   uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex, VkSwapchainKHR oldSwapChain)
 {
 	VkSwapchainCreateInfoKHR createInfo = { };
 	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
