@@ -40,6 +40,7 @@ namespace sandbox
 		std::vector<SwapChainImage> images;
 		VkExtent2D extent;
 		VkSurfaceFormatKHR surfaceFormat;
+		VkSurfaceCapabilitiesKHR surfaceCapabilities;
 		VkFormat depthFormat;
 		VkPresentModeKHR presentMode;
 		size_t inFlightFrameIndex;
@@ -55,12 +56,12 @@ namespace sandbox
 
 		void CreateImages(VkDevice device, const VkPhysicalDeviceMemoryProperties & physicalDeviceMemoryProperties);
 
-		void ChooseExtent(VkExtent2D windowExtent, const VkSurfaceCapabilitiesKHR & surfaceCapabilities);
+		void ChooseExtent(VkExtent2D windowExtent);
 
-		void CalculateImageCount(const VkSurfaceCapabilitiesKHR & surfaceCapabilities);
+		void CalculateImageCount();
 
-		void Create(VkDevice device, VkSurfaceKHR surface, const VkSurfaceCapabilitiesKHR & surfaceCapabilities,
-					uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex, VkSwapchainKHR oldSwapChain);
+		void Create(VkDevice device, VkSurfaceKHR surface, uint32_t graphicsFamilyIndex,
+					uint32_t presentFamilyIndex, VkSwapchainKHR oldSwapChain);
 
 		void CreateSyncObjects(VkDevice device);
 	};

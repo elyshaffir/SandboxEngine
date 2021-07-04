@@ -13,14 +13,13 @@ sandbox::SwapChain::SwapChain(VkPhysicalDevice physicalDevice, VkDevice device, 
 		: swapChain(), renderPass(), inFlightFrameIndex(), imageCount(), extent(), surfaceFormat(), depthFormat(),
 		presentMode(presentMode), imageIndex()
 {
-	VkSurfaceCapabilitiesKHR surfaceCapabilities = { };
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities);
-	CalculateImageCount(surfaceCapabilities);
-	ChooseExtent(windowExtent, surfaceCapabilities);
+	CalculateImageCount();
+	ChooseExtent(windowExtent);
 	ChooseSurfaceFormat(availableFormats);
 	ChooseDepthFormat(physicalDevice);
 	renderPass = RenderPass(device, depthFormat);
-	Create(device, surface, surfaceCapabilities, graphicsFamilyIndex, presentFamilyIndex, oldSwapChain);
+	Create(device, surface, graphicsFamilyIndex, presentFamilyIndex, oldSwapChain);
 	graphicsCommandPool = CommandPool(device, graphicsFamilyIndex);
 	CreateImages(device, physicalDeviceMemoryProperties);
 	CreateSyncObjects(device);
@@ -138,8 +137,8 @@ void sandbox::SwapChain::Destroy(VkDevice device, bool recycle)
 }
 
 void
-sandbox::SwapChain::Create(VkDevice device, VkSurfaceKHR surface, const VkSurfaceCapabilitiesKHR & surfaceCapabilities,
-						   uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex, VkSwapchainKHR oldSwapChain)
+sandbox::SwapChain::Create(VkDevice device, VkSurfaceKHR surface, uint32_t graphicsFamilyIndex,
+						   uint32_t presentFamilyIndex, VkSwapchainKHR oldSwapChain)
 {
 	VkSwapchainCreateInfoKHR createInfo = { };
 	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -174,7 +173,7 @@ sandbox::SwapChain::Create(VkDevice device, VkSurfaceKHR surface, const VkSurfac
 	}
 }
 
-void sandbox::SwapChain::ChooseExtent(VkExtent2D windowExtent, const VkSurfaceCapabilitiesKHR & surfaceCapabilities)
+void sandbox::SwapChain::ChooseExtent(VkExtent2D windowExtent)
 {
 	if (surfaceCapabilities.currentExtent.width != UINT32_MAX)
 	{
@@ -246,7 +245,7 @@ void sandbox::SwapChain::CreateImages(VkDevice device,
 	}
 }
 
-void sandbox::SwapChain::CalculateImageCount(const VkSurfaceCapabilitiesKHR & surfaceCapabilities)
+void sandbox::SwapChain::CalculateImageCount()
 {
 	imageCount = surfaceCapabilities.minImageCount + 1;
 	if (surfaceCapabilities.maxImageCount > 0 && imageCount > surfaceCapabilities.maxImageCount)
