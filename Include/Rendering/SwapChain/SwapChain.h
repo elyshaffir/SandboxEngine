@@ -19,7 +19,7 @@ namespace sandbox
 		SwapChain() = default; // todo: find a way to remove
 
 		SwapChain(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface,
-				  const std::vector<VkPresentModeKHR> & availablePresentModes, VkExtent2D windowExtent,
+				  VkPresentModeKHR presentMode, VkExtent2D windowExtent,
 				  const std::vector<VkSurfaceFormatKHR> & availableFormats,
 				  const VkPhysicalDeviceMemoryProperties & physicalDeviceMemoryProperties,
 				  uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex,
@@ -59,7 +59,7 @@ namespace sandbox
 		void CalculateImageCount(const VkSurfaceCapabilitiesKHR & surfaceCapabilities);
 
 		void Create(VkDevice device, VkSurfaceKHR surface, const VkSurfaceCapabilitiesKHR & surfaceCapabilities,
-					const std::vector<VkPresentModeKHR> & availablePresentModes,
+					VkPresentModeKHR presentMode,
 					uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex, VkSwapchainKHR oldSwapChain);
 
 		void CreateSyncObjects(VkDevice device);

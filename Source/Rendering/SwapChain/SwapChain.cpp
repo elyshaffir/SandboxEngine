@@ -3,25 +3,9 @@
 #include <stdexcept>
 #include <array>
 
-#include <glog/logging.h>
-
-static VkPresentModeKHR ChoosePresentMode(const std::vector<VkPresentModeKHR> & availablePresentModes)
-{
-	for (const auto & availablePresentMode : availablePresentModes)
-	{
-		if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
-		{
-			LOG(INFO) << "Present mode: Mailbox";
-			return availablePresentMode;
-		}
-	}
-
-	LOG(INFO) << "Present mode: V-Sync";
-	return VK_PRESENT_MODE_FIFO_KHR;
-}
 
 sandbox::SwapChain::SwapChain(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface,
-							  const std::vector<VkPresentModeKHR> & availablePresentModes, VkExtent2D windowExtent,
+							  VkPresentModeKHR presentMode, VkExtent2D windowExtent,
 							  const std::vector<VkSurfaceFormatKHR> & availableFormats,
 							  const VkPhysicalDeviceMemoryProperties & physicalDeviceMemoryProperties,
 							  uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex,
@@ -36,8 +20,7 @@ sandbox::SwapChain::SwapChain(VkPhysicalDevice physicalDevice, VkDevice device, 
 	ChooseSurfaceFormat(availableFormats);
 	ChooseDepthFormat(physicalDevice);
 	renderPass = RenderPass(device, depthFormat);
-	Create(device, surface, surfaceCapabilities, availablePresentModes, graphicsFamilyIndex, presentFamilyIndex,
-		   oldSwapChain);
+	Create(device, surface, surfaceCapabilities, presentMode, graphicsFamilyIndex, presentFamilyIndex, oldSwapChain);
 	graphicsCommandPool = CommandPool(device, graphicsFamilyIndex);
 	CreateImages(device, physicalDeviceMemoryProperties);
 	CreateSyncObjects(device);
@@ -156,8 +139,8 @@ void sandbox::SwapChain::Destroy(VkDevice device, bool recycle)
 
 void sandbox::SwapChain::Create(VkDevice device, VkSurfaceKHR surface,
 								const VkSurfaceCapabilitiesKHR & surfaceCapabilities,
-								const std::vector<VkPresentModeKHR> & availablePresentModes,
-								uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex, VkSwapchainKHR oldSwapChain)
+								VkPresentModeKHR presentMode, uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex,
+								VkSwapchainKHR oldSwapChain)
 {
 	VkSwapchainCreateInfoKHR createInfo = { };
 	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -167,7 +150,7 @@ void sandbox::SwapChain::Create(VkDevice device, VkSurfaceKHR surface,
 	createInfo.minImageCount = imageCount;
 	createInfo.imageExtent = extent;
 	createInfo.preTransform = surfaceCapabilities.currentTransform;
-	createInfo.presentMode = ChoosePresentMode(availablePresentModes);
+	createInfo.presentMode = presentMode;
 	createInfo.imageArrayLayers = 1;
 	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 	if (graphicsFamilyIndex != presentFamilyIndex)

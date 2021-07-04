@@ -21,7 +21,7 @@ namespace sandbox
 
 		std::vector<VkSurfaceFormatKHR> GenerateSurfaceFormats(VkSurfaceKHR surface) const;
 
-		std::vector<VkPresentModeKHR> GeneratePresentModes(VkSurfaceKHR surface) const;
+		VkPresentModeKHR ChoosePresentMode(VkSurfaceKHR surface) const;
 
 	private:
 		void PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface);

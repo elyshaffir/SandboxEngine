@@ -4,7 +4,8 @@
 
 #include <glog/logging.h>
 
-sandbox::PhysicalDevice::PhysicalDevice(VkInstance instance, VkSurfaceKHR surface) : physicalDevice(), properties()
+sandbox::PhysicalDevice::PhysicalDevice(VkInstance instance, VkSurfaceKHR surface)
+		: physicalDevice(), properties(), graphicsQueueFamilyIndex(), presentQueueFamilyIndex()
 {
 	PickPhysicalDevice(instance, surface);
 	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &properties);
@@ -24,7 +25,7 @@ std::vector<VkSurfaceFormatKHR> sandbox::PhysicalDevice::GenerateSurfaceFormats(
 	return formats;
 }
 
-std::vector<VkPresentModeKHR> sandbox::PhysicalDevice::GeneratePresentModes(VkSurfaceKHR surface) const
+VkPresentModeKHR sandbox::PhysicalDevice::ChoosePresentMode(VkSurfaceKHR surface) const
 {
 	std::vector<VkPresentModeKHR> presentModes;
 	uint32_t presentModeCount = 0;
@@ -35,7 +36,22 @@ std::vector<VkPresentModeKHR> sandbox::PhysicalDevice::GeneratePresentModes(VkSu
 		presentModes.resize(presentModeCount);
 		vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, presentModes.data());
 	}
-	return presentModes;
+	else
+	{
+		return VK_PRESENT_MODE_MAX_ENUM_KHR;
+	}
+
+	for (const auto & presentMode : presentModes)
+	{
+		if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+		{
+			LOG(INFO) << "Present mode: Mailbox";
+			return presentMode;
+		}
+	}
+
+	LOG(INFO) << "Present mode: V-Sync";
+	return VK_PRESENT_MODE_FIFO_KHR;
 }
 
 void sandbox::PhysicalDevice::PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface)
@@ -54,7 +70,7 @@ void sandbox::PhysicalDevice::PickPhysicalDevice(VkInstance instance, VkSurfaceK
 	{
 		physicalDevice = availableDevice;
 		if (AreExtensionsSupported() && !GenerateSurfaceFormats(surface).empty() &&
-			!GeneratePresentModes(surface).empty() && AreFeaturesSupported() &&
+			ChoosePresentMode(surface) != VK_PRESENT_MODE_MAX_ENUM_KHR && AreFeaturesSupported() &&
 			FindGraphicsFamily() && FindPresentFamily(surface))
 		{
 			break;
