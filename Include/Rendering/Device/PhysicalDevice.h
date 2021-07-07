@@ -23,6 +23,8 @@ namespace sandbox
 
 		VkPresentModeKHR ChoosePresentMode(VkSurfaceKHR surface) const;
 
+		VkFormat ChooseDepthFormat() const;
+
 	private:
 		void PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface);
 

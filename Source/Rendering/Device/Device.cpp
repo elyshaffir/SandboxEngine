@@ -17,8 +17,9 @@ sandbox::Device::Device(VkInstance instance, VkSurfaceKHR surface, VkExtent2D wi
 	vkGetDeviceQueue(device, physicalDevice.graphicsQueueFamilyIndex, 0, &graphicsQueue);
 	vkGetDeviceQueue(device, physicalDevice.presentQueueFamilyIndex, 0, &presentQueue);
 	swapChain = SwapChain(physicalDevice.physicalDevice, device, surface, physicalDevice.ChoosePresentMode(surface),
-						  windowExtent, physicalDevice.GenerateSurfaceFormats(surface), physicalDevice.properties,
-						  physicalDevice.graphicsQueueFamilyIndex, physicalDevice.presentQueueFamilyIndex);
+						  physicalDevice.ChooseDepthFormat(), windowExtent,
+						  physicalDevice.GenerateSurfaceFormats(surface), physicalDevice.properties,
+						  physicalDevice.graphicsQueueFamilyIndex, physicalDevice.presentQueueFamilyIndex, 0);
 }
 
 void sandbox::Device::Destroy()
@@ -88,8 +89,10 @@ bool sandbox::Device::FinalizeDrawFrame()
 void sandbox::Device::RecreateSwapChain(VkSurfaceKHR surface, VkExtent2D windowExtent)
 {
 	swapChain.Destroy(device, true);
+
 	swapChain = SwapChain(physicalDevice.physicalDevice, device, surface, physicalDevice.ChoosePresentMode(surface),
-						  windowExtent, physicalDevice.GenerateSurfaceFormats(surface), physicalDevice.properties,
+						  physicalDevice.ChooseDepthFormat(), windowExtent,
+						  physicalDevice.GenerateSurfaceFormats(surface), physicalDevice.properties,
 						  physicalDevice.graphicsQueueFamilyIndex, physicalDevice.presentQueueFamilyIndex,
 						  swapChain.swapChain);
 }

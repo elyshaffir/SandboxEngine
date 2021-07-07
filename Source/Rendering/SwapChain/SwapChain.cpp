@@ -5,19 +5,18 @@
 
 
 sandbox::SwapChain::SwapChain(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface,
-							  VkPresentModeKHR presentMode, VkExtent2D windowExtent,
+							  VkPresentModeKHR presentMode, VkFormat depthFormat, VkExtent2D windowExtent,
 							  const std::vector<VkSurfaceFormatKHR> & availableFormats,
 							  const VkPhysicalDeviceMemoryProperties & physicalDeviceMemoryProperties,
 							  uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex,
 							  VkSwapchainKHR oldSwapChain)
-		: swapChain(), renderPass(), inFlightFrameIndex(), imageCount(), extent(), surfaceFormat(), depthFormat(),
-		presentMode(presentMode), imageIndex()
+		: swapChain(), renderPass(), inFlightFrameIndex(), imageCount(), extent(), surfaceFormat(),
+		  depthFormat(depthFormat), presentMode(presentMode), imageIndex()
 {
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities);
 	CalculateImageCount();
 	ChooseExtent(windowExtent);
 	ChooseSurfaceFormat(availableFormats);
-	ChooseDepthFormat(physicalDevice);
 	renderPass = RenderPass(device, depthFormat);
 	Create(device, surface, graphicsFamilyIndex, presentFamilyIndex, oldSwapChain);
 	graphicsCommandPool = CommandPool(device, graphicsFamilyIndex);
@@ -136,9 +135,8 @@ void sandbox::SwapChain::Destroy(VkDevice device, bool recycle)
 	renderPass.Destroy(device);
 }
 
-void
-sandbox::SwapChain::Create(VkDevice device, VkSurfaceKHR surface, uint32_t graphicsFamilyIndex,
-						   uint32_t presentFamilyIndex, VkSwapchainKHR oldSwapChain)
+void sandbox::SwapChain::Create(VkDevice device, VkSurfaceKHR surface, uint32_t graphicsFamilyIndex,
+								uint32_t presentFamilyIndex, VkSwapchainKHR oldSwapChain)
 {
 	VkSwapchainCreateInfoKHR createInfo = { };
 	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -203,26 +201,6 @@ void sandbox::SwapChain::ChooseSurfaceFormat(const std::vector<VkSurfaceFormatKH
 		}
 	}
 	surfaceFormat = availableFormats[0];
-}
-
-void sandbox::SwapChain::ChooseDepthFormat(VkPhysicalDevice physicalDevice)
-{
-	std::vector<VkFormat> candidates = {
-			VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT
-	};
-	for (VkFormat format : candidates)
-	{
-		VkFormatProperties formatProperties = { };
-		vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &formatProperties);
-
-		if ((formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) ==
-			VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
-		{
-			depthFormat = format;
-			return;
-		}
-	}
-	throw std::runtime_error("Failed to find supported format");
 }
 
 void sandbox::SwapChain::CreateImages(VkDevice device,

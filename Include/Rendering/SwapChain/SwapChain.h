@@ -19,11 +19,11 @@ namespace sandbox
 		SwapChain() = default; // todo: find a way to remove
 
 		SwapChain(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface,
-				  VkPresentModeKHR presentMode, VkExtent2D windowExtent,
+				  VkPresentModeKHR presentMode, VkFormat depthFormat, VkExtent2D windowExtent,
 				  const std::vector<VkSurfaceFormatKHR> & availableFormats,
 				  const VkPhysicalDeviceMemoryProperties & physicalDeviceMemoryProperties,
 				  uint32_t graphicsFamilyIndex, uint32_t presentFamilyIndex,
-				  VkSwapchainKHR oldSwapChain = VK_NULL_HANDLE);
+				  VkSwapchainKHR oldSwapChain);
 
 		bool BeginDrawFrame(VkDevice device);
 
@@ -51,8 +51,6 @@ namespace sandbox
 		CommandPool graphicsCommandPool;
 
 		void ChooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR> & availableFormats);
-
-		void ChooseDepthFormat(VkPhysicalDevice physicalDevice);
 
 		void CreateImages(VkDevice device, const VkPhysicalDeviceMemoryProperties & physicalDeviceMemoryProperties);
 
